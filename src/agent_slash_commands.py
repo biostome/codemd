@@ -809,12 +809,114 @@ def _handle_agents(agent: 'LocalCodingAgent', args: str, input_text: str) -> Sla
         return _local_result(input_text, agent.render_agents_report())
     if trimmed == 'all':
         return _local_result(input_text, agent.render_agents_report(show_all=True))
+    if trimmed.startswith('create '):
+        try:
+            source, agent_type, description, system_prompt = _parse_agent_mutation_payload(
+                trimmed[7:].strip(),
+                default_source='projectSettings',
+                mode='create',
+            )
+        except ValueError as exc:
+            return _local_result(input_text, str(exc))
+        return _local_result(
+            input_text,
+            agent.render_agent_create_report(
+                agent_type,
+                source=source,
+                description=description,
+                system_prompt=system_prompt,
+            ),
+        )
+    if trimmed.startswith('update '):
+        try:
+            source, agent_type, description, system_prompt = _parse_agent_mutation_payload(
+                trimmed[7:].strip(),
+                default_source='auto',
+                mode='update',
+            )
+        except ValueError as exc:
+            return _local_result(input_text, str(exc))
+        if description is None and system_prompt is None:
+            return _local_result(
+                input_text,
+                'Usage: /agents update [user|project] <agent-type> [description] [:: system prompt]',
+            )
+        return _local_result(
+            input_text,
+            agent.render_agent_update_report(
+                agent_type,
+                source=source,
+                description=description,
+                system_prompt=system_prompt,
+            ),
+        )
+    if trimmed.startswith('delete '):
+        try:
+            source, agent_type = _parse_agent_target(trimmed[7:].strip(), default_source='auto')
+        except ValueError as exc:
+            return _local_result(input_text, str(exc))
+        return _local_result(
+            input_text,
+            agent.render_agent_delete_report(agent_type, source=source),
+        )
     if trimmed.startswith('show '):
         agent_type = trimmed[5:].strip()
         if not agent_type:
-            return _local_result(input_text, 'Usage: /agents [all|active|show <agent-type>]')
+            return _local_result(input_text, _agents_usage())
         return _local_result(input_text, agent.render_agent_detail_report(agent_type))
     return _local_result(input_text, agent.render_agent_detail_report(trimmed))
+
+
+def _agents_usage() -> str:
+    return (
+        'Usage: /agents [all|active|show <agent-type>|'
+        'create [user|project] <agent-type> [description] [:: system prompt]|'
+        'update [user|project] <agent-type> [description] [:: system prompt]|'
+        'delete [user|project] <agent-type>]'
+    )
+
+
+def _parse_agent_target(payload: str, *, default_source: str) -> tuple[str, str]:
+    tokens = payload.split()
+    if not tokens:
+        raise ValueError(_agents_usage())
+    source = default_source
+    if tokens[0] in {'user', 'project', 'userSettings', 'projectSettings', 'auto'}:
+        source = tokens.pop(0)
+    if not tokens:
+        raise ValueError(_agents_usage())
+    return source, tokens[0]
+
+
+def _parse_agent_mutation_payload(
+    payload: str,
+    *,
+    default_source: str,
+    mode: str,
+) -> tuple[str, str, str | None, str | None]:
+    parts = [part.strip() for part in payload.split('::')]
+    source, agent_type = _parse_agent_target(parts[0], default_source=default_source)
+    head_tokens = parts[0].split()
+    if head_tokens and head_tokens[0] in {'user', 'project', 'userSettings', 'projectSettings', 'auto'}:
+        head_tokens = head_tokens[1:]
+    trailing_description = ' '.join(head_tokens[1:]).strip() if len(head_tokens) > 1 else ''
+    description = trailing_description or None
+    system_prompt = None
+    if mode == 'create':
+        if len(parts) >= 2 and parts[1]:
+            description = parts[1]
+        if len(parts) >= 3 and parts[2]:
+            system_prompt = parts[2]
+    else:
+        if len(parts) >= 2 and parts[1]:
+            if trailing_description:
+                system_prompt = parts[1]
+            else:
+                system_prompt = parts[1]
+        if len(parts) >= 3:
+            description = parts[1] or description
+            system_prompt = parts[2] or system_prompt
+    return source, agent_type, description, system_prompt
 
 
 def _handle_memory(agent: 'LocalCodingAgent', _args: str, input_text: str) -> SlashCommandResult:

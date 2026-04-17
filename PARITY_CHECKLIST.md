@@ -117,6 +117,7 @@ Done:
 - [x] Filesystem-backed custom agent discovery from `~/.claude/agents` and `./.claude/agents`
 - [x] Active agent override precedence across built-in, user, and project agent definitions
 - [x] Custom agent resolution in the `Agent` tool with model, tool-filter, and initial-prompt support
+- [x] Local custom-agent file creation, update, and deletion flows for project/user agent definitions
 
 Missing:
 
@@ -145,6 +146,9 @@ Done:
 - [x] `agent-context-raw` command
 - [x] `token-budget` command
 - [x] `agents` command
+- [x] `agents-create` command
+- [x] `agents-update` command
+- [x] `agents-delete` command
 - [x] Local background session mode
 - [x] Local background session listing (`agent-ps`)
 - [x] Local background session logs (`agent-logs`)
@@ -317,7 +321,7 @@ Done (53 slash command names in 37 specs):
 Missing npm slash commands (from `src/commands/` — 80+ commands total):
 
 - [x] `/add-dir` — Add a new working directory
-- [x] `/agents` — Inspect local agent configurations and show active definitions
+- [x] `/agents` — Inspect, create, update, and delete local agent definitions
 - [x] `/branch` — Create a branch of the current conversation
 - [ ] `/bridge` — Connect for remote-control sessions
 - [ ] `/btw` — Quick side question without interrupting main conversation
@@ -366,7 +370,7 @@ Missing npm slash commands (from `src/commands/` — 80+ commands total):
 - [ ] Feature-gated: `/buddy`, `/fork`, `/peers`, `/proactive`, `/torch`, `/workflows` (full), etc.
 - [ ] Internal: `/backfill-sessions`, `/break-cache`, `/bughunter`, `/commit-push-pr`, `/init-verifiers`, `/mock-limits`, `/version`, `/ultraplan`, `/autofix-pr`, etc.
 - [x] `/commit` — Create a git commit (prompt-type with injected git context)
-- [ ] Full `/agents` parity for create/edit/delete flows and multi-source management UI
+- [ ] Full `/agents` parity for interactive TUI/editor flows, plugin sources, and full multi-source management UX
 
 ## 6. Built-in Tools
 
