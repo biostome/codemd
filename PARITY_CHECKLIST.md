@@ -706,6 +706,7 @@ Done:
 - [x] Basic file operations in tool implementations
 - [x] Basic git status snapshot
 - [x] Basic shell/subprocess handling
+- [x] Bundled small portable utilities — `utils/array.ts`, `utils/set.ts`, `utils/objectGroupBy.ts`, `utils/xml.ts`, `utils/uuid.ts` ported in `src/small_utils.py`
 
 Missing major utility categories:
 
