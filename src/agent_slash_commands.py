@@ -539,6 +539,16 @@ def get_slash_command_specs() -> tuple[SlashCommandSpec, ...]:
             description='List remote environments or set the default profile.',
             handler=_handle_remote_env,
         ),
+        SlashCommandSpec(
+            names=('bridge', 'remote-control', 'rc'),
+            description='Report remote-control bridge status (read-only in this runtime).',
+            handler=_handle_bridge,
+        ),
+        SlashCommandSpec(
+            names=('remote-setup', 'web-setup'),
+            description='Report Claude Code on the web setup readiness (gh + sign-in checks).',
+            handler=_handle_remote_setup,
+        ),
     )
 
 
@@ -2449,6 +2459,107 @@ def _handle_remote_env(
         f'Default remote environment set to {profile.name} '
         f'[{profile.mode}] -> {profile.target} (saved to {mutation.store_path}).',
     )
+
+
+def _handle_bridge(
+    agent: 'LocalCodingAgent',
+    args: str,
+    input_text: str,
+) -> SlashCommandResult:
+    runtime = agent.remote_runtime
+    requested_name = args.strip() or None
+    lines = ['Remote-control bridge: not implemented in the Python runtime.']
+    lines.append(
+        '  The npm CLI hosts an interactive bridge against claude.ai; this '
+        'runtime only inspects the local remote-runtime state.'
+    )
+    if runtime is None:
+        lines.append('  (Remote runtime is unavailable.)')
+        return _local_result(input_text, '\n'.join(lines))
+
+    connection = runtime.active_connection
+    if connection is not None:
+        lines.append('')
+        lines.append('Active local remote connection:')
+        lines.append(f'  - mode: {connection.mode}')
+        lines.append(f'  - target: {connection.target}')
+        if connection.profile_name:
+            lines.append(f'  - profile: {connection.profile_name}')
+        if connection.session_url:
+            lines.append(f'  - session URL: {connection.session_url}')
+        if connection.workspace_cwd:
+            lines.append(f'  - workspace: {connection.workspace_cwd}')
+    else:
+        lines.append('')
+        lines.append('No active local remote connection.')
+    if requested_name:
+        profile = runtime.get_profile(requested_name)
+        lines.append('')
+        if profile is None:
+            lines.append(
+                f'No matching remote profile for "{requested_name}". '
+                'Run /remote-env to list available profiles.'
+            )
+        else:
+            lines.append(
+                f'Matched remote profile "{profile.name}" '
+                f'({profile.mode} -> {profile.target}). '
+                'Use the npm CLI bridge to actually connect.'
+            )
+    return _local_result(input_text, '\n'.join(lines))
+
+
+def _gh_auth_status() -> tuple[str, str]:
+    """Return (status, detail) — status is one of 'not_installed',
+    'authenticated', 'not_authenticated', 'unknown'."""
+    import shutil
+    import subprocess
+
+    if shutil.which('gh') is None:
+        return ('not_installed', 'gh CLI not on PATH')
+    try:
+        result = subprocess.run(
+            ['gh', 'auth', 'status'],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except (subprocess.SubprocessError, OSError) as exc:
+        return ('unknown', f'gh auth status failed: {exc}')
+    detail = (result.stderr or result.stdout or '').strip().splitlines()
+    summary = detail[0] if detail else ''
+    if result.returncode == 0:
+        return ('authenticated', summary or 'Authenticated to GitHub')
+    return ('not_authenticated', summary or 'Not authenticated to GitHub')
+
+
+def _handle_remote_setup(
+    agent: 'LocalCodingAgent',
+    _args: str,
+    input_text: str,
+) -> SlashCommandResult:
+    code_web_url = 'https://claude.ai/code'
+    gh_status, gh_detail = _gh_auth_status()
+    lines = [
+        'Claude Code on the web setup:',
+        f'  Visit {code_web_url} to manage your environments.',
+        '',
+        f'GitHub CLI: {gh_status}',
+        f'  {gh_detail}',
+    ]
+    if gh_status == 'not_installed':
+        lines.append('  Install gh from https://cli.github.com to import a GitHub token.')
+    elif gh_status == 'not_authenticated':
+        lines.append('  Run `gh auth login` to authenticate before importing your token.')
+    elif gh_status == 'authenticated':
+        lines.append('  You can run `gh auth token` to retrieve the token to import on the web.')
+    lines.append('')
+    lines.append(
+        'Token import / default-environment provisioning is not implemented '
+        'in the Python runtime — complete remote setup from the npm CLI or '
+        'directly on claude.ai/code.'
+    )
+    return _local_result(input_text, '\n'.join(lines))
 
 
 def _prompt_result(input_text: str, prompt: str) -> SlashCommandResult:

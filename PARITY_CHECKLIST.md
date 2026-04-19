@@ -323,7 +323,7 @@ Missing npm slash commands (from `src/commands/` — 80+ commands total):
 - [x] `/add-dir` — Add a new working directory
 - [x] `/agents` — Inspect, create, update, and delete local agent definitions
 - [x] `/branch` — Create a branch of the current conversation
-- [ ] `/bridge` — Connect for remote-control sessions
+- [x] `/bridge` — Connect for remote-control sessions (read-only status in this runtime)
 - [x] `/btw` — Quick side question without interrupting main conversation
 - [x] `/chrome` — Chrome extension settings
 - [x] `/color` — Set the prompt bar color for this session
@@ -354,7 +354,7 @@ Missing npm slash commands (from `src/commands/` — 80+ commands total):
 - [x] `/release-notes` — View release notes
 - [x] `/reload-plugins` — Activate pending plugin changes
 - [x] `/remote-env` — Configure default remote environment
-- [ ] `/remote-setup` — Remote setup configuration
+- [x] `/remote-setup` — Remote setup configuration (gh auth status + Claude.ai/code link)
 - [x] `/rename` — Rename current conversation
 - [x] `/resume`, `/continue` — Resume a previous conversation
 - [x] `/rewind`, `/checkpoint` — Restore code/conversation to a previous point
