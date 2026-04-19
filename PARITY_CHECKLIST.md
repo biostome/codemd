@@ -707,6 +707,7 @@ Done:
 - [x] Basic git status snapshot
 - [x] Basic shell/subprocess handling
 - [x] Bundled small portable utilities — `utils/array.ts`, `utils/set.ts`, `utils/objectGroupBy.ts`, `utils/xml.ts`, `utils/uuid.ts` ported in `src/small_utils.py`
+- [x] Session-scoped env-var registry (`utils/sessionEnvVars.ts`) ported in `src/session_env_vars.py`
 
 Missing major utility categories:
 
