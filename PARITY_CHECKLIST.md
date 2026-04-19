@@ -175,10 +175,10 @@ Missing:
 - [ ] Self-hosted runner mode
 - [ ] tmux fast paths
 - [ ] Worktree fast paths at the CLI entrypoint level
-- [ ] Node.js version check and platform setup from `setup.ts`
+- [x] Python (Node.js equivalent) version check and platform detection from `setup.ts`
 - [ ] Worktree creation/setup from `setup.ts`
 - [ ] Terminal backup/restore from `setup.ts`
-- [ ] Release notes checking from `setup.ts`
+- [x] Release notes checking from `setup.ts` (local CHANGELOG.md, no network/cache layer)
 - [ ] Full `entrypoints/cli.tsx` parity (version flag, feature flags, env setup, dynamic imports)
 - [ ] Full `entrypoints/init.ts` parity (settings validation, OAuth, policy limits, telemetry, cleanup handlers)
 - [ ] SDK entrypoint (`entrypoints/sdk/` — controlTypes, coreTypes, runtimeTypes, settingsTypes, toolTypes)
