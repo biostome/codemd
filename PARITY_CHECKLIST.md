@@ -181,7 +181,7 @@ Missing:
 - [x] Release notes checking from `setup.ts` (local CHANGELOG.md, no network/cache layer)
 - [ ] Full `entrypoints/cli.tsx` parity (version flag, feature flags, env setup, dynamic imports)
 - [ ] Full `entrypoints/init.ts` parity (settings validation, OAuth, policy limits, telemetry, cleanup handlers)
-- [ ] SDK entrypoint (`entrypoints/sdk/` — controlTypes, coreTypes, runtimeTypes, settingsTypes, toolTypes)
+- [ ] SDK entrypoint (`entrypoints/sdk/` — controlTypes, coreTypes, runtimeTypes, settingsTypes, toolTypes) — partial: HOOK_EVENTS, EXIT_REASONS, ModelUsage, ThinkingConfig, MCP server configs, JsonSchemaOutputFormat ported in `src/sdk_core_types.py`
 - [x] Sandbox types/network config schema (`entrypoints/sandboxTypes.ts`)
 
 ## 3. Prompt Assembly
