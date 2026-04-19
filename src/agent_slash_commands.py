@@ -414,6 +414,81 @@ def get_slash_command_specs() -> tuple[SlashCommandSpec, ...]:
             description='Restore the conversation to a previous point.',
             handler=_handle_rewind,
         ),
+        SlashCommandSpec(
+            names=('output-style',),
+            description='Deprecated: use /config to change your output style.',
+            handler=_handle_output_style,
+        ),
+        SlashCommandSpec(
+            names=('release-notes',),
+            description='Show local release notes or a link to the changelog.',
+            handler=_handle_release_notes,
+        ),
+        SlashCommandSpec(
+            names=('feedback', 'bug'),
+            description='Open the Claude Code feedback page in a browser.',
+            handler=_handle_feedback,
+        ),
+        SlashCommandSpec(
+            names=('upgrade',),
+            description='Open the Claude.ai upgrade page in a browser.',
+            handler=_handle_upgrade,
+        ),
+        SlashCommandSpec(
+            names=('stickers',),
+            description='Open the Claude Code sticker order page in a browser.',
+            handler=_handle_stickers,
+        ),
+        SlashCommandSpec(
+            names=('mobile', 'ios', 'android'),
+            description='Show download links for the Claude mobile apps.',
+            handler=_handle_mobile,
+        ),
+        SlashCommandSpec(
+            names=('desktop', 'app'),
+            description='Show the Claude Desktop handoff page link.',
+            handler=_handle_desktop,
+        ),
+        SlashCommandSpec(
+            names=('install-github-app',),
+            description='Open the Claude GitHub Actions setup page.',
+            handler=_handle_install_github_app,
+        ),
+        SlashCommandSpec(
+            names=('install-slack-app',),
+            description='Open the Claude Slack app installation page.',
+            handler=_handle_install_slack_app,
+        ),
+        SlashCommandSpec(
+            names=('privacy-settings',),
+            description='Open the Claude.ai privacy controls page.',
+            handler=_handle_privacy_settings,
+        ),
+        SlashCommandSpec(
+            names=('extra-usage',),
+            description='Show extra-usage configuration link.',
+            handler=_handle_extra_usage,
+        ),
+        SlashCommandSpec(
+            names=('passes',),
+            description='Show Claude Code guest passes information.',
+            handler=_handle_passes,
+        ),
+        SlashCommandSpec(
+            names=('rate-limit-options',),
+            description='Show options when the active account hits a rate limit.',
+            handler=_handle_rate_limit_options,
+        ),
+        SlashCommandSpec(
+            names=('chrome',),
+            description='Open the Claude Chrome extension page.',
+            handler=_handle_chrome,
+        ),
+        SlashCommandSpec(
+            names=('reload-plugins',),
+            description='Reload local plugin manifests and report counts.',
+            handler=_handle_reload_plugins,
+        ),
     )
 
 
@@ -1613,6 +1688,291 @@ def _handle_rewind(agent: 'LocalCodingAgent', args: str, input_text: str) -> Sla
     return _local_result(
         input_text,
         f'Rewound conversation to message {target}. Removed {removed_count} messages.',
+    )
+
+
+_FEEDBACK_URL = 'https://github.com/anthropics/claude-code/issues'
+_UPGRADE_URL = 'https://claude.ai/upgrade/max'
+_STICKERS_URL = 'https://www.stickermule.com/claudecode'
+_MOBILE_IOS_URL = 'https://apps.apple.com/app/claude-by-anthropic/id6473753684'
+_MOBILE_ANDROID_URL = 'https://play.google.com/store/apps/details?id=com.anthropic.claude'
+_DESKTOP_URL = 'https://claude.ai/download'
+_GITHUB_APP_URL = 'https://github.com/apps/claude'
+_SLACK_APP_URL = 'https://slack.com/marketplace/A08SF47R6P4-claude'
+_PRIVACY_URL = 'https://claude.ai/settings/data-privacy-controls'
+_CHROME_EXTENSION_URL = 'https://claude.ai/chrome'
+_CHANGELOG_URL = 'https://github.com/anthropics/claude-code/blob/main/CHANGELOG.md'
+
+
+def _try_open_browser(url: str) -> bool:
+    import os
+    import webbrowser
+
+    # Avoid spawning a browser in CI / non-interactive environments.
+    if os.environ.get('CLAUDE_CODE_NO_BROWSER') or os.environ.get('CI'):
+        return False
+    try:
+        return webbrowser.open(url, new=2)
+    except Exception:
+        return False
+
+
+def _open_or_link(url: str, *, opening_message: str, fallback_message: str) -> str:
+    if _try_open_browser(url):
+        return f'{opening_message}\n  {url}'
+    return f'{fallback_message}\n  {url}'
+
+
+def _changelog_path(agent: 'LocalCodingAgent') -> 'Path':
+    from pathlib import Path
+
+    cwd = Path(agent.runtime_config.cwd)
+    for candidate in (cwd / 'CHANGELOG.md', cwd / 'docs' / 'CHANGELOG.md'):
+        if candidate.exists():
+            return candidate
+    return cwd / 'CHANGELOG.md'
+
+
+def _handle_output_style(
+    agent: 'LocalCodingAgent',
+    _args: str,
+    input_text: str,
+) -> SlashCommandResult:
+    return _local_result(
+        input_text,
+        '/output-style has been deprecated. Use /config to change your output style, '
+        'or set it in your settings file. Changes take effect on the next session.',
+    )
+
+
+def _handle_release_notes(
+    agent: 'LocalCodingAgent',
+    _args: str,
+    input_text: str,
+) -> SlashCommandResult:
+    path = _changelog_path(agent)
+    if path.exists():
+        try:
+            content = path.read_text(encoding='utf-8').strip()
+        except OSError as exc:
+            return _local_result(input_text, f'Could not read {path}: {exc}')
+        # Show only the most recent release block (everything up to the second
+        # second-level heading, mirroring how the npm command surfaces a single
+        # version chunk by default).
+        lines = content.splitlines()
+        chunk: list[str] = []
+        seen_heading = False
+        for line in lines:
+            if line.startswith('## '):
+                if seen_heading:
+                    break
+                seen_heading = True
+            chunk.append(line)
+        return _local_result(input_text, '\n'.join(chunk).strip() or content)
+    return _local_result(
+        input_text,
+        f'No local CHANGELOG.md found. See the full changelog at:\n  {_CHANGELOG_URL}',
+    )
+
+
+def _handle_feedback(
+    agent: 'LocalCodingAgent',
+    args: str,
+    input_text: str,
+) -> SlashCommandResult:
+    note = args.strip()
+    body = _open_or_link(
+        _FEEDBACK_URL,
+        opening_message='Opening the Claude Code feedback tracker in your browser…',
+        fallback_message='Submit feedback at:',
+    )
+    if note:
+        body += f'\n\nDraft note (copy into the report form):\n{note}'
+    return _local_result(input_text, body)
+
+
+def _handle_upgrade(
+    agent: 'LocalCodingAgent',
+    _args: str,
+    input_text: str,
+) -> SlashCommandResult:
+    return _local_result(
+        input_text,
+        _open_or_link(
+            _UPGRADE_URL,
+            opening_message='Opening the Claude.ai upgrade page in your browser…',
+            fallback_message='Upgrade your account at:',
+        ),
+    )
+
+
+def _handle_stickers(
+    agent: 'LocalCodingAgent',
+    _args: str,
+    input_text: str,
+) -> SlashCommandResult:
+    return _local_result(
+        input_text,
+        _open_or_link(
+            _STICKERS_URL,
+            opening_message='Opening the Claude Code sticker page in your browser…',
+            fallback_message='Order Claude Code stickers at:',
+        ),
+    )
+
+
+def _handle_mobile(
+    agent: 'LocalCodingAgent',
+    _args: str,
+    input_text: str,
+) -> SlashCommandResult:
+    lines = [
+        'Download the Claude mobile app:',
+        f'  iOS:     {_MOBILE_IOS_URL}',
+        f'  Android: {_MOBILE_ANDROID_URL}',
+    ]
+    return _local_result(input_text, '\n'.join(lines))
+
+
+def _handle_desktop(
+    agent: 'LocalCodingAgent',
+    _args: str,
+    input_text: str,
+) -> SlashCommandResult:
+    import platform
+
+    system = platform.system()
+    if system not in {'Darwin', 'Windows'}:
+        return _local_result(
+            input_text,
+            f'Claude Desktop is currently available on macOS and Windows only '
+            f'(detected: {system}). Download:\n  {_DESKTOP_URL}',
+        )
+    return _local_result(
+        input_text,
+        _open_or_link(
+            _DESKTOP_URL,
+            opening_message='Opening the Claude Desktop download page in your browser…',
+            fallback_message='Download Claude Desktop at:',
+        ),
+    )
+
+
+def _handle_install_github_app(
+    agent: 'LocalCodingAgent',
+    _args: str,
+    input_text: str,
+) -> SlashCommandResult:
+    return _local_result(
+        input_text,
+        _open_or_link(
+            _GITHUB_APP_URL,
+            opening_message='Opening the Claude GitHub App installation page in your browser…',
+            fallback_message='Set up Claude GitHub Actions at:',
+        ),
+    )
+
+
+def _handle_install_slack_app(
+    agent: 'LocalCodingAgent',
+    _args: str,
+    input_text: str,
+) -> SlashCommandResult:
+    return _local_result(
+        input_text,
+        _open_or_link(
+            _SLACK_APP_URL,
+            opening_message='Opening the Claude Slack app marketplace page in your browser…',
+            fallback_message="Couldn't open browser. Visit:",
+        ),
+    )
+
+
+def _handle_privacy_settings(
+    agent: 'LocalCodingAgent',
+    _args: str,
+    input_text: str,
+) -> SlashCommandResult:
+    return _local_result(
+        input_text,
+        f'Review and manage your privacy settings at:\n  {_PRIVACY_URL}',
+    )
+
+
+def _handle_extra_usage(
+    agent: 'LocalCodingAgent',
+    _args: str,
+    input_text: str,
+) -> SlashCommandResult:
+    return _local_result(
+        input_text,
+        'Configure extra usage on a Claude.ai account at:\n'
+        f'  {_UPGRADE_URL}\n'
+        'After upgrading, run /login to refresh your local credentials.',
+    )
+
+
+def _handle_passes(
+    agent: 'LocalCodingAgent',
+    _args: str,
+    input_text: str,
+) -> SlashCommandResult:
+    return _local_result(
+        input_text,
+        'Claude Code guest passes are managed in your Claude.ai account.\n'
+        '  Visit https://claude.ai to sign in and view remaining passes.',
+    )
+
+
+def _handle_rate_limit_options(
+    agent: 'LocalCodingAgent',
+    _args: str,
+    input_text: str,
+) -> SlashCommandResult:
+    lines = [
+        'When the current account hits a rate limit, you can:',
+        '  - Run /upgrade to move to a higher Claude.ai plan.',
+        '  - Run /extra-usage to enable per-message billing on a Claude.ai plan.',
+        '  - Run /login to switch to an API-key billed account.',
+        f'See {_UPGRADE_URL} for plan details.',
+    ]
+    return _local_result(input_text, '\n'.join(lines))
+
+
+def _handle_chrome(
+    agent: 'LocalCodingAgent',
+    _args: str,
+    input_text: str,
+) -> SlashCommandResult:
+    return _local_result(
+        input_text,
+        _open_or_link(
+            _CHROME_EXTENSION_URL,
+            opening_message='Opening the Claude Chrome extension page in your browser…',
+            fallback_message='Install the Claude Chrome extension at:',
+        ),
+    )
+
+
+def _handle_reload_plugins(
+    agent: 'LocalCodingAgent',
+    _args: str,
+    input_text: str,
+) -> SlashCommandResult:
+    from pathlib import Path
+    from .plugin_runtime import PluginRuntime
+
+    runtime = PluginRuntime.from_workspace(Path(agent.runtime_config.cwd))
+    agent.plugin_runtime = runtime
+    plugin_count = len(runtime.manifests)
+    tool_count = sum(len(manifest.tool_names) for manifest in runtime.manifests)
+    hook_count = sum(len(manifest.hook_names) for manifest in runtime.manifests)
+    virtual_count = sum(len(manifest.virtual_tools) for manifest in runtime.manifests)
+    return _local_result(
+        input_text,
+        'Reloaded plugins: '
+        f'{plugin_count} plugin(s) · {tool_count} tool(s) · {hook_count} hook(s) · '
+        f'{virtual_count} virtual tool(s)',
     )
 
 

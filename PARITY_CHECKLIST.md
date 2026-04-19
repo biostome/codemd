@@ -325,34 +325,34 @@ Missing npm slash commands (from `src/commands/` — 80+ commands total):
 - [x] `/branch` — Create a branch of the current conversation
 - [ ] `/bridge` — Connect for remote-control sessions
 - [ ] `/btw` — Quick side question without interrupting main conversation
-- [ ] `/chrome` — Chrome extension settings
+- [x] `/chrome` — Chrome extension settings
 - [x] `/color` — Set the prompt bar color for this session
 - [x] `/compact` — Clear history but keep a summary in context
 - [x] `/copy` — Copy Claude's last response to clipboard
 - [x] `/cost` — Show total cost and duration of session
-- [ ] `/desktop` — Continue session in Claude Desktop
+- [x] `/desktop` — Continue session in Claude Desktop
 - [x] `/diff` — View uncommitted changes and per-turn diffs
 - [x] `/doctor` — Diagnose and verify installation and settings
 - [x] `/effort` — Set effort level for model usage
 - [x] `/exit` — Exit the REPL
 - [x] `/export` — Export conversation to file or clipboard
-- [ ] `/extra-usage` — Configure extra usage for rate limits
+- [x] `/extra-usage` — Configure extra usage for rate limits
 - [x] `/fast` — Toggle fast mode
-- [ ] `/feedback` — Submit feedback
+- [x] `/feedback` — Submit feedback (alias `/bug`)
 - [x] `/files` — List all files currently in context
 - [ ] `/ide` — Manage IDE integrations and show status
-- [ ] `/install-github-app` — Set up GitHub Actions
-- [ ] `/install-slack-app` — Install Slack app
+- [x] `/install-github-app` — Set up GitHub Actions
+- [x] `/install-slack-app` — Install Slack app
 - [ ] `/keybindings` — Open keybindings config file
-- [ ] `/mobile` — QR code for mobile app
-- [ ] `/output-style` — Change output style
-- [ ] `/passes` — Passes management
+- [x] `/mobile` — Mobile app store links (aliases `/ios`, `/android`)
+- [x] `/output-style` — Deprecation pointer to `/config`
+- [x] `/passes` — Passes management
 - [ ] `/plugin` — Plugin management
 - [x] `/pr-comments`, `/pr_comments` — Get comments from a GitHub PR (prompt-type)
-- [ ] `/privacy-settings` — View/update privacy settings
-- [ ] `/rate-limit-options` — Show options when rate limited
-- [ ] `/release-notes` — View release notes
-- [ ] `/reload-plugins` — Activate pending plugin changes
+- [x] `/privacy-settings` — View/update privacy settings
+- [x] `/rate-limit-options` — Show options when rate limited
+- [x] `/release-notes` — View release notes
+- [x] `/reload-plugins` — Activate pending plugin changes
 - [ ] `/remote-env` — Configure default remote environment
 - [ ] `/remote-setup` — Remote setup configuration
 - [x] `/rename` — Rename current conversation
@@ -361,10 +361,10 @@ Missing npm slash commands (from `src/commands/` — 80+ commands total):
 - [ ] `/sandbox-toggle` — Toggle sandbox mode
 - [x] `/skills` — List available skills
 - [x] `/stats` — Usage statistics and activity
-- [ ] `/stickers` — Order stickers
+- [x] `/stickers` — Order stickers
 - [x] `/tag` — Toggle a searchable tag on the session
 - [ ] `/theme` — Change the theme
-- [ ] `/upgrade` — Upgrade to Max
+- [x] `/upgrade` — Upgrade to Max
 - [x] `/vim` — Toggle Vim/Normal editing modes
 - [ ] `/voice` — Toggle voice mode
 - [ ] Feature-gated: `/buddy`, `/fork`, `/peers`, `/proactive`, `/torch`, `/workflows` (full), etc.
