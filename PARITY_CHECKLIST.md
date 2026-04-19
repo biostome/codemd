@@ -359,7 +359,7 @@ Missing npm slash commands (from `src/commands/` — 80+ commands total):
 - [x] `/resume`, `/continue` — Resume a previous conversation
 - [x] `/rewind`, `/checkpoint` — Restore code/conversation to a previous point
 - [x] `/sandbox-toggle` — Toggle sandbox mode (alias `/sandbox`)
-- [x] `/skills` — List available skills
+- [x] `/skills` — List available bundled skills (mirrors `commands/skills/SkillsMenu.tsx`; lists `bundled_skills.BUNDLED_SKILLS`, not slash commands)
 - [x] `/stats` — Usage statistics and activity
 - [x] `/stickers` — Order stickers
 - [x] `/tag` — Toggle a searchable tag on the session

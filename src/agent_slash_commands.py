@@ -1667,11 +1667,19 @@ def _handle_add_dir(agent: 'LocalCodingAgent', args: str, input_text: str) -> Sl
 
 
 def _handle_skills(agent: 'LocalCodingAgent', _args: str, input_text: str) -> SlashCommandResult:
-    """List available skills."""
+    """List bundled skills (mirrors npm `/skills` SkillsMenu listing)."""
+    from .bundled_skills import get_bundled_skills
+
     lines = ['## Available Skills', '']
-    for spec in get_slash_command_specs():
-        primary = f'/{spec.names[0]}'
-        lines.append(f'- `{primary}`: {spec.description}')
+    for skill in get_bundled_skills():
+        if not skill.user_invocable:
+            continue
+        header = f'- `{skill.name}`'
+        if skill.aliases:
+            header += f' (aliases: {", ".join(skill.aliases)})'
+        lines.append(f'{header}: {skill.description}')
+        if skill.when_to_use:
+            lines.append(f'  - When to use: {skill.when_to_use}')
     lines.extend(['', 'Use the Skill tool to invoke skills programmatically.'])
     return _local_result(input_text, '\n'.join(lines))
 
