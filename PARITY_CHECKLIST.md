@@ -182,7 +182,7 @@ Missing:
 - [ ] Full `entrypoints/cli.tsx` parity (version flag, feature flags, env setup, dynamic imports)
 - [ ] Full `entrypoints/init.ts` parity (settings validation, OAuth, policy limits, telemetry, cleanup handlers)
 - [ ] SDK entrypoint (`entrypoints/sdk/` — controlTypes, coreTypes, runtimeTypes, settingsTypes, toolTypes)
-- [ ] Sandbox types/network config schema (`entrypoints/sandboxTypes.ts`)
+- [x] Sandbox types/network config schema (`entrypoints/sandboxTypes.ts`)
 
 ## 3. Prompt Assembly
 
