@@ -489,6 +489,31 @@ def get_slash_command_specs() -> tuple[SlashCommandSpec, ...]:
             description='Reload local plugin manifests and report counts.',
             handler=_handle_reload_plugins,
         ),
+        SlashCommandSpec(
+            names=('theme',),
+            description='List available themes or set the current theme.',
+            handler=_handle_theme,
+        ),
+        SlashCommandSpec(
+            names=('voice',),
+            description='Toggle voice-mode setting for this workspace.',
+            handler=_handle_voice,
+        ),
+        SlashCommandSpec(
+            names=('sandbox-toggle', 'sandbox'),
+            description='Show sandbox status or exclude a command pattern.',
+            handler=_handle_sandbox_toggle,
+        ),
+        SlashCommandSpec(
+            names=('keybindings',),
+            description='Print or create the local keybindings file.',
+            handler=_handle_keybindings,
+        ),
+        SlashCommandSpec(
+            names=('btw',),
+            description='Ask Claude a quick side question without altering state.',
+            handler=_handle_btw,
+        ),
     )
 
 
@@ -1974,6 +1999,194 @@ def _handle_reload_plugins(
         f'{plugin_count} plugin(s) · {tool_count} tool(s) · {hook_count} hook(s) · '
         f'{virtual_count} virtual tool(s)',
     )
+
+
+_AVAILABLE_THEMES = (
+    'light',
+    'dark',
+    'light-daltonized',
+    'dark-daltonized',
+    'light-ansi',
+    'dark-ansi',
+)
+
+
+def _config_get(runtime, key_path: str, default=None):
+    try:
+        return runtime.get_value(key_path)
+    except KeyError:
+        return default
+
+
+def _handle_theme(
+    agent: 'LocalCodingAgent',
+    args: str,
+    input_text: str,
+) -> SlashCommandResult:
+    runtime = agent.config_runtime
+    if runtime is None:
+        return _local_result(input_text, 'Config runtime is unavailable.')
+    requested = args.strip()
+    current = _config_get(runtime, 'theme') or 'light'
+    if not requested:
+        lines = ['Available themes:']
+        for name in _AVAILABLE_THEMES:
+            marker = ' (current)' if name == current else ''
+            lines.append(f'  - {name}{marker}')
+        lines.append('')
+        lines.append('Usage: /theme <name>')
+        return _local_result(input_text, '\n'.join(lines))
+    if requested not in _AVAILABLE_THEMES:
+        return _local_result(
+            input_text,
+            f'Unknown theme "{requested}". Available: {", ".join(_AVAILABLE_THEMES)}.',
+        )
+    mutation = runtime.set_value('theme', requested, source='local')
+    return _local_result(
+        input_text,
+        f'Theme set to {requested} (saved to {mutation.store_path}).',
+    )
+
+
+def _handle_voice(
+    agent: 'LocalCodingAgent',
+    args: str,
+    input_text: str,
+) -> SlashCommandResult:
+    runtime = agent.config_runtime
+    if runtime is None:
+        return _local_result(input_text, 'Config runtime is unavailable.')
+    arg = args.strip().lower()
+    current = bool(_config_get(runtime, 'voiceEnabled', False))
+    if arg in {'on', 'enable', 'true'}:
+        new_value = True
+    elif arg in {'off', 'disable', 'false'}:
+        new_value = False
+    elif not arg:
+        new_value = not current
+    else:
+        return _local_result(input_text, 'Usage: /voice [on|off]')
+    mutation = runtime.set_value('voiceEnabled', new_value, source='local')
+    state = 'enabled' if new_value else 'disabled'
+    extra = ''
+    if new_value:
+        import platform
+
+        if platform.system() == 'Linux':
+            extra = (
+                '\nLinux note: confirm microphone access in your audio settings '
+                'before holding to talk.'
+            )
+    return _local_result(
+        input_text,
+        f'Voice mode {state} (saved to {mutation.store_path}).{extra}',
+    )
+
+
+def _handle_sandbox_toggle(
+    agent: 'LocalCodingAgent',
+    args: str,
+    input_text: str,
+) -> SlashCommandResult:
+    runtime = agent.config_runtime
+    if runtime is None:
+        return _local_result(input_text, 'Config runtime is unavailable.')
+    trimmed = args.strip()
+    if not trimmed:
+        enabled = bool(_config_get(runtime, 'sandbox.enabled', False))
+        excluded = _config_get(runtime, 'sandbox.excludedCommands') or []
+        lines = [
+            f'Sandbox: {"enabled" if enabled else "disabled"}',
+            f'Excluded commands ({len(excluded)}):',
+        ]
+        for pattern in excluded:
+            lines.append(f'  - {pattern}')
+        lines.append('')
+        lines.append(
+            'Usage: /sandbox-toggle exclude "<pattern>"  '
+            '— append a command pattern to the local sandbox excludes.'
+        )
+        return _local_result(input_text, '\n'.join(lines))
+
+    parts = trimmed.split(None, 1)
+    subcommand = parts[0].lower()
+    if subcommand != 'exclude':
+        return _local_result(
+            input_text,
+            f'Unknown subcommand "{subcommand}". Available: exclude.',
+        )
+    if len(parts) < 2 or not parts[1].strip():
+        return _local_result(
+            input_text,
+            'Usage: /sandbox-toggle exclude "<pattern>" '
+            '(e.g., /sandbox-toggle exclude "npm run test:*").',
+        )
+    pattern = parts[1].strip().strip('"').strip("'")
+    existing = list(_config_get(runtime, 'sandbox.excludedCommands') or [])
+    if pattern in existing:
+        return _local_result(
+            input_text,
+            f'Pattern "{pattern}" is already in sandbox.excludedCommands.',
+        )
+    existing.append(pattern)
+    mutation = runtime.set_value(
+        'sandbox.excludedCommands', existing, source='local',
+    )
+    return _local_result(
+        input_text,
+        f'Added "{pattern}" to sandbox.excludedCommands in {mutation.store_path}.',
+    )
+
+
+_KEYBINDINGS_TEMPLATE = (
+    '{\n'
+    '  "$schema": "https://claude.ai/schemas/keybindings.json",\n'
+    '  "bindings": {\n'
+    '    // "chat:submit": "ctrl+enter"\n'
+    '  }\n'
+    '}\n'
+)
+
+
+def _handle_keybindings(
+    agent: 'LocalCodingAgent',
+    _args: str,
+    input_text: str,
+) -> SlashCommandResult:
+    from pathlib import Path
+
+    cwd = Path(agent.runtime_config.cwd)
+    path = cwd / '.claude' / 'keybindings.json'
+    created = False
+    if not path.exists():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(_KEYBINDINGS_TEMPLATE, encoding='utf-8')
+        created = True
+    verb = 'Created' if created else 'Found'
+    import os
+
+    editor = os.environ.get('EDITOR') or os.environ.get('VISUAL') or '<your editor>'
+    return _local_result(
+        input_text,
+        f'{verb} {path}.\n'
+        f'Edit it with: {editor} {path}',
+    )
+
+
+def _handle_btw(
+    agent: 'LocalCodingAgent',
+    args: str,
+    input_text: str,
+) -> SlashCommandResult:
+    question = args.strip()
+    if not question:
+        return _local_result(input_text, 'Usage: /btw <your question>')
+    prompt = (
+        'Answer the following side question concisely. Do NOT modify any files, '
+        "run shell commands, or alter the workspace — just answer in text.\n\n"
+        f'Side question: {question}'
+    )
+    return _prompt_result(input_text, prompt)
 
 
 def _prompt_result(input_text: str, prompt: str) -> SlashCommandResult:

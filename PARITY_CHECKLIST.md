@@ -324,7 +324,7 @@ Missing npm slash commands (from `src/commands/` — 80+ commands total):
 - [x] `/agents` — Inspect, create, update, and delete local agent definitions
 - [x] `/branch` — Create a branch of the current conversation
 - [ ] `/bridge` — Connect for remote-control sessions
-- [ ] `/btw` — Quick side question without interrupting main conversation
+- [x] `/btw` — Quick side question without interrupting main conversation
 - [x] `/chrome` — Chrome extension settings
 - [x] `/color` — Set the prompt bar color for this session
 - [x] `/compact` — Clear history but keep a summary in context
@@ -343,7 +343,7 @@ Missing npm slash commands (from `src/commands/` — 80+ commands total):
 - [ ] `/ide` — Manage IDE integrations and show status
 - [x] `/install-github-app` — Set up GitHub Actions
 - [x] `/install-slack-app` — Install Slack app
-- [ ] `/keybindings` — Open keybindings config file
+- [x] `/keybindings` — Open keybindings config file
 - [x] `/mobile` — Mobile app store links (aliases `/ios`, `/android`)
 - [x] `/output-style` — Deprecation pointer to `/config`
 - [x] `/passes` — Passes management
@@ -358,15 +358,15 @@ Missing npm slash commands (from `src/commands/` — 80+ commands total):
 - [x] `/rename` — Rename current conversation
 - [x] `/resume`, `/continue` — Resume a previous conversation
 - [x] `/rewind`, `/checkpoint` — Restore code/conversation to a previous point
-- [ ] `/sandbox-toggle` — Toggle sandbox mode
+- [x] `/sandbox-toggle` — Toggle sandbox mode (alias `/sandbox`)
 - [x] `/skills` — List available skills
 - [x] `/stats` — Usage statistics and activity
 - [x] `/stickers` — Order stickers
 - [x] `/tag` — Toggle a searchable tag on the session
-- [ ] `/theme` — Change the theme
+- [x] `/theme` — Change the theme
 - [x] `/upgrade` — Upgrade to Max
 - [x] `/vim` — Toggle Vim/Normal editing modes
-- [ ] `/voice` — Toggle voice mode
+- [x] `/voice` — Toggle voice mode
 - [ ] Feature-gated: `/buddy`, `/fork`, `/peers`, `/proactive`, `/torch`, `/workflows` (full), etc.
 - [ ] Internal: `/backfill-sessions`, `/break-cache`, `/bughunter`, `/commit-push-pr`, `/init-verifiers`, `/mock-limits`, `/version`, `/ultraplan`, `/autofix-pr`, etc.
 - [x] `/commit` — Create a git commit (prompt-type with injected git context)
