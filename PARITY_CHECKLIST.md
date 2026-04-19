@@ -721,7 +721,7 @@ Missing major utility categories:
 - [ ] Plugin/Skill utilities (`utils/plugins/`, `utils/skills/`)
 - [ ] Memory/Context (`utils/memory/`, `utils/claudemd.ts`, `utils/contextAnalysis.ts`)
 - [ ] IDE integration (`utils/ide.ts`, `utils/jetbrains.ts`)
-- [ ] Platform/OS (`utils/platform.ts`, `utils/terminal.ts`, `utils/systemDirectories.ts`)
+- [ ] Platform/OS (`utils/platform.ts`, `utils/terminal.ts`, `utils/systemDirectories.ts`) — partial: platform detection (`getPlatform`, `getWslVersion`, `getLinuxDistroInfo`, `detectVcs`) and `getSystemDirectories` ported in `src/platform_info.py`
 - [ ] Debugging (`utils/debug.ts`, `utils/diagLogs.ts`, `utils/log.ts`, `utils/profilerBase.ts`)
 - [ ] Telemetry (`utils/telemetry/`)
 - [ ] Deep link utilities (`utils/deepLink/`)
