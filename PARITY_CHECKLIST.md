@@ -340,20 +340,20 @@ Missing npm slash commands (from `src/commands/` — 80+ commands total):
 - [x] `/fast` — Toggle fast mode
 - [x] `/feedback` — Submit feedback (alias `/bug`)
 - [x] `/files` — List all files currently in context
-- [ ] `/ide` — Manage IDE integrations and show status
+- [x] `/ide` — Manage IDE integrations and show status
 - [x] `/install-github-app` — Set up GitHub Actions
 - [x] `/install-slack-app` — Install Slack app
 - [x] `/keybindings` — Open keybindings config file
 - [x] `/mobile` — Mobile app store links (aliases `/ios`, `/android`)
 - [x] `/output-style` — Deprecation pointer to `/config`
 - [x] `/passes` — Passes management
-- [ ] `/plugin` — Plugin management
+- [x] `/plugin` — Plugin management (read-only listing)
 - [x] `/pr-comments`, `/pr_comments` — Get comments from a GitHub PR (prompt-type)
 - [x] `/privacy-settings` — View/update privacy settings
 - [x] `/rate-limit-options` — Show options when rate limited
 - [x] `/release-notes` — View release notes
 - [x] `/reload-plugins` — Activate pending plugin changes
-- [ ] `/remote-env` — Configure default remote environment
+- [x] `/remote-env` — Configure default remote environment
 - [ ] `/remote-setup` — Remote setup configuration
 - [x] `/rename` — Rename current conversation
 - [x] `/resume`, `/continue` — Resume a previous conversation

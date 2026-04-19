@@ -514,6 +514,31 @@ def get_slash_command_specs() -> tuple[SlashCommandSpec, ...]:
             description='Ask Claude a quick side question without altering state.',
             handler=_handle_btw,
         ),
+        SlashCommandSpec(
+            names=('version',),
+            description='Print the running version of the agent.',
+            handler=_handle_version,
+        ),
+        SlashCommandSpec(
+            names=('init',),
+            description='Initialize a CLAUDE.md file with codebase documentation.',
+            handler=_handle_init,
+        ),
+        SlashCommandSpec(
+            names=('ide',),
+            description='Show detected IDE/terminal integration status.',
+            handler=_handle_ide,
+        ),
+        SlashCommandSpec(
+            names=('plugin',),
+            description='List installed plugins or show plugin subcommand usage.',
+            handler=_handle_plugin,
+        ),
+        SlashCommandSpec(
+            names=('remote-env',),
+            description='List remote environments or set the default profile.',
+            handler=_handle_remote_env,
+        ),
     )
 
 
@@ -2187,6 +2212,243 @@ def _handle_btw(
         f'Side question: {question}'
     )
     return _prompt_result(input_text, prompt)
+
+
+def _read_package_version() -> str:
+    try:
+        from importlib.metadata import PackageNotFoundError, version
+
+        return version('claw-code-agent')
+    except Exception:
+        return 'unknown'
+
+
+def _handle_version(
+    agent: 'LocalCodingAgent',
+    _args: str,
+    input_text: str,
+) -> SlashCommandResult:
+    import platform
+    import sys
+
+    pkg_version = _read_package_version()
+    py_version = platform.python_version()
+    impl = sys.implementation.name
+    return _local_result(
+        input_text,
+        f'claw-code-agent {pkg_version} (Python {py_version}, {impl}).',
+    )
+
+
+_INIT_PROMPT = (
+    'Please analyze this codebase and create a CLAUDE.md file, which will be '
+    'given to future instances of Claude Code to operate in this repository.\n'
+    '\n'
+    'What to add:\n'
+    '1. Commands that will be commonly used, such as how to build, lint, and '
+    'run tests. Include the necessary commands to develop in this codebase, '
+    'such as how to run a single test.\n'
+    '2. High-level code architecture and structure so that future instances '
+    'can be productive more quickly. Focus on the "big picture" architecture '
+    'that requires reading multiple files to understand.\n'
+    '\n'
+    'Usage notes:\n'
+    "- If there's already a CLAUDE.md, suggest improvements to it.\n"
+    '- When you make the initial CLAUDE.md, do not repeat yourself and do not '
+    'include obvious instructions like "Provide helpful error messages to '
+    'users", "Write unit tests for all new utilities", "Never include '
+    'sensitive information (API keys, tokens) in code or commits".\n'
+    '- Avoid listing every component or file structure that can be easily '
+    'discovered.\n'
+    "- Don't include generic development practices.\n"
+    '- If there are Cursor rules (in .cursor/rules/ or .cursorrules) or '
+    'Copilot rules (in .github/copilot-instructions.md), make sure to include '
+    'the important parts.\n'
+    '- If there is a README.md, make sure to include the important parts.\n'
+    '- Do not make up information such as "Common Development Tasks", "Tips '
+    'for Development", "Support and Documentation" unless this is expressly '
+    'included in other files that you read.\n'
+    '- Be sure to prefix the file with the following text:\n'
+    '\n'
+    '```\n'
+    '# CLAUDE.md\n'
+    '\n'
+    'This file provides guidance to Claude Code (claude.ai/code) when '
+    'working with code in this repository.\n'
+    '```'
+)
+
+
+def _handle_init(
+    agent: 'LocalCodingAgent',
+    _args: str,
+    input_text: str,
+) -> SlashCommandResult:
+    return _prompt_result(input_text, _INIT_PROMPT)
+
+
+def _detect_ide_environment() -> tuple[str, list[str]]:
+    """Return a (label, details) summary of the IDE/terminal integration."""
+    import os
+
+    details: list[str] = []
+    label = 'No IDE detected'
+    term_program = os.environ.get('TERM_PROGRAM')
+    if term_program:
+        details.append(f'TERM_PROGRAM={term_program}')
+    if os.environ.get('VSCODE_INJECTION') or os.environ.get('VSCODE_PID'):
+        label = 'Visual Studio Code'
+        for key in ('VSCODE_PID', 'VSCODE_IPC_HOOK', 'VSCODE_GIT_IPC_HANDLE'):
+            value = os.environ.get(key)
+            if value:
+                details.append(f'{key}={value}')
+    elif os.environ.get('JETBRAINS_IDE') or os.environ.get('TERMINAL_EMULATOR', '').startswith('JetBrains'):
+        label = 'JetBrains IDE'
+        for key in ('JETBRAINS_IDE', 'TERMINAL_EMULATOR', 'IDEA_INITIAL_DIRECTORY'):
+            value = os.environ.get(key)
+            if value:
+                details.append(f'{key}={value}')
+    elif term_program == 'iTerm.app':
+        label = 'iTerm2 (no IDE integration)'
+    elif term_program == 'Apple_Terminal':
+        label = 'Terminal.app (no IDE integration)'
+    elif term_program == 'tmux':
+        label = 'tmux session (no IDE integration)'
+    elif os.environ.get('SSH_CONNECTION'):
+        label = 'SSH session (no IDE integration)'
+        details.append('SSH_CONNECTION present')
+    return label, details
+
+
+def _handle_ide(
+    agent: 'LocalCodingAgent',
+    _args: str,
+    input_text: str,
+) -> SlashCommandResult:
+    label, details = _detect_ide_environment()
+    lines = [f'IDE/terminal integration: {label}']
+    for detail in details:
+        lines.append(f'  - {detail}')
+    if not details and label.startswith('No IDE'):
+        lines.append('  (No relevant TERM_PROGRAM/VSCODE/JETBRAINS env vars found.)')
+    lines.append('')
+    lines.append(
+        'IDE auto-connect dialogs are not implemented in the Python runtime; '
+        'launch the agent from inside your IDE terminal to inherit its env.'
+    )
+    return _local_result(input_text, '\n'.join(lines))
+
+
+def _handle_plugin(
+    agent: 'LocalCodingAgent',
+    args: str,
+    input_text: str,
+) -> SlashCommandResult:
+    runtime = agent.plugin_runtime
+    if runtime is None:
+        return _local_result(input_text, 'Plugin runtime is unavailable.')
+    sub = args.strip().split(None, 1)
+    action = sub[0].lower() if sub else 'list'
+    if action in {'help', '--help', '-h'}:
+        return _local_result(
+            input_text,
+            'Usage: /plugin [list]\n'
+            '  list  Show installed plugin manifests (default).\n'
+            '\n'
+            'Marketplace install/uninstall/enable/disable flows are not '
+            'implemented in the Python runtime — edit plugin manifests on '
+            'disk and run /reload-plugins to pick up changes.',
+        )
+    if action != 'list':
+        return _local_result(
+            input_text,
+            f'Unknown plugin subcommand "{action}". Try /plugin help.',
+        )
+    manifests = runtime.manifests
+    if not manifests:
+        return _local_result(
+            input_text,
+            'No installed plugins.\n'
+            'Drop a plugin manifest under .claude/plugins/<name>/manifest.json '
+            'and run /reload-plugins.',
+        )
+    lines = [f'Installed plugins ({len(manifests)}):']
+    for manifest in manifests:
+        version_str = f' v{manifest.version}' if manifest.version else ''
+        lines.append(f'- {manifest.name}{version_str}')
+        if manifest.description:
+            lines.append(f'    {manifest.description}')
+        if manifest.tool_names:
+            lines.append(f'    tools: {", ".join(manifest.tool_names)}')
+        if manifest.hook_names:
+            lines.append(f'    hooks: {", ".join(manifest.hook_names)}')
+        if manifest.virtual_tools:
+            lines.append(
+                f'    virtual tools: '
+                f'{", ".join(tool.name for tool in manifest.virtual_tools)}'
+            )
+    return _local_result(input_text, '\n'.join(lines))
+
+
+def _handle_remote_env(
+    agent: 'LocalCodingAgent',
+    args: str,
+    input_text: str,
+) -> SlashCommandResult:
+    runtime = agent.remote_runtime
+    if runtime is None:
+        return _local_result(input_text, 'Remote runtime is unavailable.')
+    config = agent.config_runtime
+    requested = args.strip()
+    current_default = (
+        _config_get(config, 'defaultRemoteEnvironment') if config else None
+    )
+    if not requested:
+        lines = ['Available remote environments:']
+        if not runtime.profiles:
+            lines.append('  (no profiles found in .claude/remote.json)')
+        for profile in runtime.profiles:
+            marker = ' (default)' if profile.name == current_default else ''
+            lines.append(
+                f'  - {profile.name} [{profile.mode}] -> {profile.target}{marker}'
+            )
+        if current_default:
+            lines.append('')
+            lines.append(f'Current default: {current_default}')
+        lines.append('')
+        lines.append('Usage: /remote-env <name>  — set the default profile')
+        lines.append('Usage: /remote-env clear   — unset the default profile')
+        return _local_result(input_text, '\n'.join(lines))
+
+    if requested.lower() == 'clear':
+        if config is None:
+            return _local_result(input_text, 'Config runtime is unavailable.')
+        if current_default is None:
+            return _local_result(input_text, 'No default remote environment was set.')
+        # set_value with None — write null to settings
+        mutation = config.set_value('defaultRemoteEnvironment', None, source='local')
+        return _local_result(
+            input_text,
+            f'Cleared default remote environment (saved to {mutation.store_path}).',
+        )
+
+    profile = runtime.get_profile(requested)
+    if profile is None:
+        return _local_result(
+            input_text,
+            f'Unknown remote environment "{requested}". '
+            'Run /remote-env to list available profiles.',
+        )
+    if config is None:
+        return _local_result(input_text, 'Config runtime is unavailable.')
+    mutation = config.set_value(
+        'defaultRemoteEnvironment', profile.name, source='local',
+    )
+    return _local_result(
+        input_text,
+        f'Default remote environment set to {profile.name} '
+        f'[{profile.mode}] -> {profile.target} (saved to {mutation.store_path}).',
+    )
 
 
 def _prompt_result(input_text: str, prompt: str) -> SlashCommandResult:
