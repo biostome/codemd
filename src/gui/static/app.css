@@ -730,6 +730,7 @@ body[data-view="worktree"] [data-view-name]:not([data-view-name="worktree"]) { d
 body[data-view="skills"] [data-view-name]:not([data-view-name="skills"]) { display: none !important; }
 body[data-view="account"] [data-view-name]:not([data-view-name="account"]) { display: none !important; }
 body[data-view="remote"] [data-view-name]:not([data-view-name="remote"]) { display: none !important; }
+body[data-view="mcp"] [data-view-name]:not([data-view-name="mcp"]) { display: none !important; }
 
 /* Tasks panel */
 .tasks-view {

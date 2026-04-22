@@ -171,6 +171,7 @@
             <button class="view-tab" data-view="skills" type="button">Skills</button>
             <button class="view-tab" data-view="account" type="button">Accounts</button>
             <button class="view-tab" data-view="remote" type="button">Remote</button>
+            <button class="view-tab" data-view="mcp" type="button">MCP</button>
           </div>
         </div>
         <div class="topbar-right">
@@ -203,6 +204,23 @@
           <span id="usage-meta"></span>
         </div>
       </footer>
+
+      <section id="mcp-view" class="tasks-view view" data-view-name="mcp" hidden>
+        <div class="tasks-toolbar">
+          <h2>MCP servers</h2>
+          <label class="toggle">
+            <input type="checkbox" id="mcp-include-remote" />
+            <span>Probe stdio servers (slower)</span>
+          </label>
+          <button id="mcp-refresh" class="btn-ghost" type="button" title="Refresh">⟳</button>
+        </div>
+        <h3 class="worktree-history-title">Servers</h3>
+        <div id="mcp-servers" class="skills-grid"></div>
+        <h3 class="worktree-history-title">Resources</h3>
+        <div id="mcp-resources" class="history-list"></div>
+        <h3 class="worktree-history-title">Tools</h3>
+        <div id="mcp-tools" class="history-list"></div>
+      </section>
 
       <section id="remote-view" class="tasks-view view" data-view-name="remote" hidden>
         <div class="tasks-toolbar">

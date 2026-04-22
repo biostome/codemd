@@ -101,6 +101,11 @@ const els = {
   remoteDisconnect: $("#remote-disconnect"),
   remoteProfiles: $("#remote-profiles"),
   remoteHistory: $("#remote-history"),
+  mcpServers: $("#mcp-servers"),
+  mcpResources: $("#mcp-resources"),
+  mcpTools: $("#mcp-tools"),
+  mcpRefresh: $("#mcp-refresh"),
+  mcpIncludeRemote: $("#mcp-include-remote"),
 };
 
 const BgState = { current: null, status: null };
@@ -898,6 +903,118 @@ function setView(view) {
   if (view === "skills") loadSkillsView();
   if (view === "account") loadAccount();
   if (view === "remote") loadRemote();
+  if (view === "mcp") loadMcp();
+}
+
+// ---------------------------------------------------------------------------
+// MCP view
+// ---------------------------------------------------------------------------
+async function loadMcp() {
+  try {
+    const probe = els.mcpIncludeRemote.checked ? "true" : "false";
+    const payload = await apiGet(`/api/mcp?include_remote=${probe}`);
+    renderMcp(payload);
+  } catch (e) {
+    setStatus("error", `mcp: ${e.message}`);
+  }
+}
+
+function renderMcp(payload) {
+  // Servers
+  els.mcpServers.innerHTML = "";
+  if (!payload.servers.length) {
+    els.mcpServers.innerHTML = `<div class="empty-state">No MCP servers in <code>.claw-mcp.json</code>/<code>.mcp.json</code>.</div>`;
+  } else {
+    for (const server of payload.servers) {
+      const card = document.createElement("div");
+      card.className = "skill-card";
+      card.innerHTML = `
+        <span class="skill-name">${escapeHtml(server.name)}</span>
+        <span class="skill-desc">${escapeHtml(server.description || "")}</span>
+        <div class="skill-meta">
+          <span class="skill-meta-pill">transport: ${escapeHtml(server.transport || "?")}</span>
+          ${server.command ? `<span class="skill-meta-pill">cmd: ${escapeHtml(server.command)}</span>` : ""}
+        </div>
+      `;
+      els.mcpServers.appendChild(card);
+    }
+  }
+
+  // Resources
+  els.mcpResources.innerHTML = "";
+  if (!payload.resources.length) {
+    els.mcpResources.innerHTML = `<div class="empty-state">No discovered resources.${payload.has_transport_servers ? " Toggle <em>Probe stdio servers</em> above to query live ones." : ""}</div>`;
+  } else {
+    for (const r of payload.resources) {
+      const row = document.createElement("div");
+      row.className = "history-row";
+      row.innerHTML = `
+        <span class="history-when">${escapeHtml(r.server_name || "")}</span>
+        <span class="history-tool">${escapeHtml(r.uri)}</span>
+        <span class="history-detail">${escapeHtml(r.description || r.name || "")}</span>
+        <span class="history-session"><button data-act="read">Read</button></span>
+      `;
+      row.querySelector('[data-act="read"]').addEventListener("click", () => readMcpResource(r.uri));
+      els.mcpResources.appendChild(row);
+    }
+  }
+
+  // Tools
+  els.mcpTools.innerHTML = "";
+  if (!payload.tools.length) {
+    els.mcpTools.innerHTML = `<div class="empty-state">No discovered tools.${payload.has_transport_servers ? " Toggle <em>Probe stdio servers</em> to query live ones." : ""}</div>`;
+  } else {
+    for (const t of payload.tools) {
+      const row = document.createElement("div");
+      row.className = "history-row";
+      row.innerHTML = `
+        <span class="history-when">${escapeHtml(t.server_name || "")}</span>
+        <span class="history-tool">${escapeHtml(t.name)}</span>
+        <span class="history-detail">${escapeHtml(t.description || "")}</span>
+        <span class="history-session"><button data-act="call">Call…</button></span>
+      `;
+      row.querySelector('[data-act="call"]').addEventListener("click", () => callMcpTool(t));
+      els.mcpTools.appendChild(row);
+    }
+  }
+}
+
+async function readMcpResource(uri) {
+  try {
+    setStatus("busy", "Reading resource…");
+    const data = await apiPost("/api/mcp/resources/read", { uri });
+    alert(`# ${uri}\n\n${data.content || "(empty)"}`);
+    setStatus("ready", "Read");
+  } catch (e) {
+    setStatus("error", `mcp: ${e.message}`);
+  }
+}
+
+async function callMcpTool(tool) {
+  const raw = prompt(
+    `Arguments JSON for ${tool.name} (server ${tool.server_name}):`,
+    "{}"
+  );
+  if (raw === null) return;
+  let args;
+  try {
+    args = JSON.parse(raw);
+  } catch (parseErr) {
+    setStatus("error", `mcp: invalid JSON (${parseErr.message})`);
+    return;
+  }
+  try {
+    setStatus("busy", "Calling tool…");
+    const data = await apiPost("/api/mcp/tools/call", {
+      tool_name: tool.name,
+      server_name: tool.server_name,
+      arguments: args,
+    });
+    alert(`# ${tool.name}\n\n${data.content || "(empty)"}`);
+    setStatus("ready", "Done");
+  } catch (e) {
+    setStatus("error", `mcp: ${e.message}`);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1706,6 +1823,8 @@ function bind() {
   if (els.remoteRefresh) els.remoteRefresh.addEventListener("click", loadRemote);
   if (els.remoteConnectForm) els.remoteConnectForm.addEventListener("submit", connectRemoteForm);
   if (els.remoteDisconnect) els.remoteDisconnect.addEventListener("click", disconnectRemote);
+  if (els.mcpRefresh) els.mcpRefresh.addEventListener("click", loadMcp);
+  if (els.mcpIncludeRemote) els.mcpIncludeRemote.addEventListener("change", loadMcp);
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && !els.palette.classList.contains("hidden")) {
       closePalette();
