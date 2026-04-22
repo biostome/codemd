@@ -272,6 +272,16 @@ function applyServerState(state) {
   for (const name of BUDGET_FIELDS) {
     if (f[name]) f[name].value = state[name] == null ? "" : state[name];
   }
+  for (const name of ["custom_system_prompt", "append_system_prompt", "override_system_prompt"]) {
+    if (f[name]) f[name].value = state[name] || "";
+  }
+  if (f.response_schema) {
+    f.response_schema.value = state.response_schema
+      ? JSON.stringify(state.response_schema, null, 2)
+      : "";
+  }
+  if (f.response_schema_name) f.response_schema_name.value = state.response_schema_name || "response";
+  if (f.response_schema_strict) f.response_schema_strict.checked = !!state.response_schema_strict;
   els.cwdMeta.textContent = `cwd: ${state.cwd || "?"}`;
 }
 
@@ -309,6 +319,29 @@ async function saveSettings(ev) {
     const raw = fd.get(name);
     payload[name] = raw === null || raw === "" ? null : Number(raw);
   }
+  for (const name of ["custom_system_prompt", "append_system_prompt", "override_system_prompt"]) {
+    if (!f[name]) continue;
+    const raw = fd.get(name);
+    payload[name] = raw && raw.trim() ? raw : null;
+  }
+  if (f.response_schema) {
+    const raw = (fd.get("response_schema") || "").trim();
+    if (!raw) {
+      payload.response_schema = null;
+    } else {
+      try {
+        payload.response_schema = JSON.parse(raw);
+      } catch (parseErr) {
+        setStatus("error", `schema: invalid JSON (${parseErr.message})`);
+        return;
+      }
+    }
+  }
+  if (f.response_schema_name) {
+    const raw = (fd.get("response_schema_name") || "").trim();
+    if (raw) payload.response_schema_name = raw;
+  }
+  if (f.response_schema_strict) payload.response_schema_strict = f.response_schema_strict.checked;
   try {
     setStatus("busy", "Saving settings…");
     const state = await apiPost("/api/state", payload);

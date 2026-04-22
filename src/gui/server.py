@@ -30,6 +30,7 @@ from ..agent_types import (
     AgentRuntimeConfig,
     BudgetConfig,
     ModelConfig,
+    OutputSchemaConfig,
 )
 from ..bundled_skills import get_bundled_skills
 from ..paste_refs import PastedContent, expand_pasted_text_refs
@@ -73,6 +74,12 @@ class AgentState:
         max_delegated_tasks: int | None = None,
         max_model_calls: int | None = None,
         max_session_turns: int | None = None,
+        custom_system_prompt: str | None = None,
+        append_system_prompt: str | None = None,
+        override_system_prompt: str | None = None,
+        response_schema: dict[str, Any] | None = None,
+        response_schema_name: str = 'response',
+        response_schema_strict: bool = False,
     ) -> None:
         self.cwd = cwd.resolve()
         self.session_directory = session_directory
@@ -96,6 +103,12 @@ class AgentState:
         self.max_delegated_tasks = max_delegated_tasks
         self.max_model_calls = max_model_calls
         self.max_session_turns = max_session_turns
+        self.custom_system_prompt = custom_system_prompt
+        self.append_system_prompt = append_system_prompt
+        self.override_system_prompt = override_system_prompt
+        self.response_schema = response_schema
+        self.response_schema_name = response_schema_name
+        self.response_schema_strict = response_schema_strict
         self._build_agent()
 
     def _build_agent(self) -> None:
@@ -114,6 +127,13 @@ class AgentState:
             max_model_calls=self.max_model_calls,
             max_session_turns=self.max_session_turns,
         )
+        output_schema: OutputSchemaConfig | None = None
+        if self.response_schema is not None:
+            output_schema = OutputSchemaConfig(
+                name=self.response_schema_name,
+                schema=self.response_schema,
+                strict=self.response_schema_strict,
+            )
         runtime_config = AgentRuntimeConfig(
             cwd=self.cwd,
             permissions=permissions,
@@ -121,6 +141,7 @@ class AgentState:
             stream_model_responses=self.stream_model_responses,
             max_turns=self.max_turns,
             budget_config=budget_config,
+            output_schema=output_schema,
         )
         model_config = ModelConfig(
             model=self.model,
@@ -132,6 +153,9 @@ class AgentState:
         self._agent = LocalCodingAgent(
             model_config=model_config,
             runtime_config=runtime_config,
+            custom_system_prompt=self.custom_system_prompt,
+            append_system_prompt=self.append_system_prompt,
+            override_system_prompt=self.override_system_prompt,
         )
 
     @property
@@ -163,6 +187,14 @@ class AgentState:
         max_delegated_tasks: Any = _UNSET,
         max_model_calls: Any = _UNSET,
         max_session_turns: Any = _UNSET,
+        # System prompt knobs use the sentinel pattern too — None clears,
+        # missing leaves untouched.
+        custom_system_prompt: Any = _UNSET,
+        append_system_prompt: Any = _UNSET,
+        override_system_prompt: Any = _UNSET,
+        response_schema: Any = _UNSET,
+        response_schema_name: str | None = None,
+        response_schema_strict: bool | None = None,
     ) -> None:
         with self._lock:
             if model is not None:
@@ -217,6 +249,30 @@ class AgentState:
                         raise ValueError(f'{name} must be > 0 or null')
                 setattr(self, name, value)
 
+            for name, value in (
+                ('custom_system_prompt', custom_system_prompt),
+                ('append_system_prompt', append_system_prompt),
+                ('override_system_prompt', override_system_prompt),
+            ):
+                if value is _UNSET:
+                    continue
+                if value is not None and not isinstance(value, str):
+                    raise ValueError(f'{name} must be a string or null')
+                # Treat empty string as a clear, since blank textareas serialize
+                # to "" but the runtime expects None for "use default".
+                setattr(self, name, value or None)
+
+            if response_schema is not _UNSET:
+                if response_schema is not None and not isinstance(response_schema, dict):
+                    raise ValueError('response_schema must be a JSON object or null')
+                self.response_schema = response_schema
+            if response_schema_name is not None:
+                if not isinstance(response_schema_name, str) or not response_schema_name.strip():
+                    raise ValueError('response_schema_name must be a non-empty string')
+                self.response_schema_name = response_schema_name.strip()
+            if response_schema_strict is not None:
+                self.response_schema_strict = bool(response_schema_strict)
+
             self._build_agent()
 
     def snapshot(self) -> dict[str, Any]:
@@ -240,6 +296,12 @@ class AgentState:
             'max_delegated_tasks': self.max_delegated_tasks,
             'max_model_calls': self.max_model_calls,
             'max_session_turns': self.max_session_turns,
+            'custom_system_prompt': self.custom_system_prompt,
+            'append_system_prompt': self.append_system_prompt,
+            'override_system_prompt': self.override_system_prompt,
+            'response_schema': self.response_schema,
+            'response_schema_name': self.response_schema_name,
+            'response_schema_strict': self.response_schema_strict,
             'active_session_id': self.agent.active_session_id,
         }
 
@@ -292,6 +354,13 @@ class StateUpdate(BaseModel):
     max_delegated_tasks: int | None = None
     max_model_calls: int | None = None
     max_session_turns: int | None = None
+    # System prompt overrides — null clears, omitted leaves untouched.
+    custom_system_prompt: str | None = None
+    append_system_prompt: str | None = None
+    override_system_prompt: str | None = None
+    response_schema: dict[str, Any] | None = None
+    response_schema_name: str | None = None
+    response_schema_strict: bool | None = None
 
 
 # ---------------------------------------------------------------------------

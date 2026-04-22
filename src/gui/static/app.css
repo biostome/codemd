@@ -174,7 +174,9 @@ body {
   color: var(--text-dim);
 }
 
-.settings input[type="text"] {
+.settings input[type="text"],
+.settings input[type="number"],
+.settings textarea {
   background: var(--bg);
   border: 1px solid var(--border);
   color: var(--text);
@@ -184,7 +186,15 @@ body {
   font-size: 12px;
 }
 
-.settings input[type="text"]:focus {
+.settings textarea {
+  font-family: var(--font-mono);
+  resize: vertical;
+  min-height: 60px;
+}
+
+.settings input[type="text"]:focus,
+.settings input[type="number"]:focus,
+.settings textarea:focus {
   outline: none;
   border-color: var(--accent);
 }

@@ -140,6 +140,50 @@ class GuiServerTests(unittest.TestCase):
             r = client.post('/api/state', json={'max_total_cost_usd': -1})
             self.assertEqual(r.status_code, 400)
 
+    def test_state_round_trips_system_prompt_and_schema(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            client, _ = _build_client(Path(d))
+            payload = client.get('/api/state').json()
+            self.assertIsNone(payload['custom_system_prompt'])
+            self.assertIsNone(payload['response_schema'])
+            self.assertEqual(payload['response_schema_name'], 'response')
+
+            updated = client.post(
+                '/api/state',
+                json={
+                    'custom_system_prompt': 'You are a focused refactor assistant.',
+                    'append_system_prompt': '\n\nAlways quote line numbers.',
+                    'response_schema': {
+                        'type': 'object',
+                        'properties': {'verdict': {'type': 'string'}},
+                    },
+                    'response_schema_name': 'verdict_object',
+                    'response_schema_strict': True,
+                },
+            ).json()
+            self.assertIn('focused refactor', updated['custom_system_prompt'])
+            self.assertEqual(
+                updated['response_schema'],
+                {'type': 'object', 'properties': {'verdict': {'type': 'string'}}},
+            )
+            self.assertEqual(updated['response_schema_name'], 'verdict_object')
+            self.assertTrue(updated['response_schema_strict'])
+
+            # Empty string clears the system-prompt slot back to default.
+            cleared = client.post(
+                '/api/state',
+                json={'custom_system_prompt': '', 'response_schema': None},
+            ).json()
+            self.assertIsNone(cleared['custom_system_prompt'])
+            self.assertIsNone(cleared['response_schema'])
+
+    def test_state_update_rejects_invalid_schema_payload(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            client, _ = _build_client(Path(d))
+            # Pydantic catches the type mismatch before our validator does.
+            r = client.post('/api/state', json={'response_schema': 'not-an-object'})
+            self.assertEqual(r.status_code, 422)
+
     def test_state_update_rejects_bad_runtime_knobs(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             client, _ = _build_client(Path(d))

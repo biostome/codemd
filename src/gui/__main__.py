@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import webbrowser
 from pathlib import Path
@@ -57,6 +58,16 @@ def main() -> None:
     parser.add_argument('--max-delegated-tasks', type=int, default=None)
     parser.add_argument('--max-model-calls', type=int, default=None)
     parser.add_argument('--max-session-turns', type=int, default=None)
+    parser.add_argument('--system-prompt', default=None, dest='custom_system_prompt')
+    parser.add_argument('--append-system-prompt', default=None)
+    parser.add_argument('--override-system-prompt', default=None)
+    parser.add_argument(
+        '--response-schema-file',
+        default=None,
+        help='Path to a JSON file describing the structured-output schema.',
+    )
+    parser.add_argument('--response-schema-name', default='response')
+    parser.add_argument('--response-schema-strict', action='store_true')
     parser.add_argument(
         '--no-browser',
         action='store_true',
@@ -64,6 +75,11 @@ def main() -> None:
     )
 
     args = parser.parse_args()
+
+    response_schema = None
+    if args.response_schema_file:
+        with open(args.response_schema_file, encoding='utf-8') as fh:
+            response_schema = json.load(fh)
 
     state = AgentState(
         cwd=Path(args.cwd),
@@ -86,6 +102,12 @@ def main() -> None:
         max_delegated_tasks=args.max_delegated_tasks,
         max_model_calls=args.max_model_calls,
         max_session_turns=args.max_session_turns,
+        custom_system_prompt=args.custom_system_prompt,
+        append_system_prompt=args.append_system_prompt,
+        override_system_prompt=args.override_system_prompt,
+        response_schema=response_schema,
+        response_schema_name=args.response_schema_name,
+        response_schema_strict=args.response_schema_strict,
     )
     app = create_app(state)
 

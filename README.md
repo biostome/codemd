@@ -60,6 +60,7 @@
 | 🆕 | **Pasted-Content Refs** | Pastes ≥500 chars into the GUI composer collapse to `[Pasted text #N +M lines]` chips and re-expand server-side before the agent runs |
 | 🆕 | **GUI Runtime Knobs** | Settings panel exposes temperature, per-turn timeout, streaming toggle, and max-turns — all round-tripped live through `/api/state` |
 | 🆕 | **GUI Budgets & Limits** | Advanced settings disclosure for every `BudgetConfig` field: cost ceiling, token budgets, tool/model call caps, delegated task cap, session turn cap — blank input clears the limit |
+| 🆕 | **GUI System Prompt & Schema** | Custom / append / override system prompts and a structured-output JSON schema editor (with strict toggle) live-editable in the settings panel |
 | 🆕 | **Daemon Commands** | Local `daemon start/ps/logs/attach/kill` wrapper over background agent sessions |
 | 🆕 | **Background Sessions** | Local `agent-bg`, `agent-ps`, `agent-logs`, `agent-attach`, and `agent-kill` flows |
 | 🆕 | **Testing Guide** | Comprehensive [TESTING_GUIDE.md](TESTING_GUIDE.md) with commands for every feature |
@@ -756,6 +757,12 @@ Your default browser opens to `http://127.0.0.1:8765` with a modern dark-themed 
 | `--max-model-calls <n>` | Hard cap on model invocations per run |
 | `--max-delegated-tasks <n>` | Cap on nested delegated agents |
 | `--max-session-turns <n>` | Cap across resumed sessions |
+| `--system-prompt <s>` | Replace the rendered system prompt body |
+| `--append-system-prompt <s>` | Append text to the rendered system prompt |
+| `--override-system-prompt <s>` | Skip the default system prompt entirely and use this |
+| `--response-schema-file <path>` | Load a structured-output schema from a JSON file |
+| `--response-schema-name <s>` | Name the schema (default `response`) |
+| `--response-schema-strict` | Reject responses that don't match the schema |
 | `--no-browser` | Don't auto-open a browser tab |
 
 Every budget flag above is also editable at runtime through the **Budgets & limits** disclosure in the settings panel — leave a field blank to clear the limit, type a number to set it.

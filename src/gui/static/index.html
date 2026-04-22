@@ -62,6 +62,33 @@
             <input type="number" name="max_turns" min="1" step="1" />
           </label>
           <details class="settings-advanced">
+            <summary>System prompt &amp; structured output</summary>
+            <label>
+              <span>Custom system prompt</span>
+              <textarea name="custom_system_prompt" rows="3"></textarea>
+            </label>
+            <label>
+              <span>Append to system prompt</span>
+              <textarea name="append_system_prompt" rows="3"></textarea>
+            </label>
+            <label>
+              <span>Override system prompt (skip default)</span>
+              <textarea name="override_system_prompt" rows="3"></textarea>
+            </label>
+            <label>
+              <span>Response schema (JSON, blank to disable)</span>
+              <textarea name="response_schema" rows="6" spellcheck="false"></textarea>
+            </label>
+            <label>
+              <span>Schema name</span>
+              <input type="text" name="response_schema_name" autocomplete="off" />
+            </label>
+            <label class="toggle">
+              <input type="checkbox" name="response_schema_strict" />
+              <span>Strict schema enforcement</span>
+            </label>
+          </details>
+          <details class="settings-advanced">
             <summary>Budgets &amp; limits (blank = unlimited)</summary>
             <label>
               <span>Max cost (USD)</span>
