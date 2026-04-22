@@ -43,6 +43,7 @@ from .background_routes import create_background_router
 from .memory_routes import MemoryPathContext, create_memory_router
 from .plans_routes import create_plans_router
 from .tasks_routes import create_tasks_router
+from .worktree_routes import create_worktree_router
 
 
 STATIC_DIR = Path(__file__).parent / 'static'
@@ -446,6 +447,13 @@ def create_app(state: AgentState) -> FastAPI:
         )
     )
     app.include_router(create_background_router(lambda: state.cwd))
+
+    def _apply_cwd(new_cwd: Path) -> None:
+        # Worktree enter/exit hands us the new cwd; round-trip it through
+        # AgentState.update so the agent gets rebuilt against the new dir.
+        state.update(cwd=str(new_cwd))
+
+    app.include_router(create_worktree_router(lambda: state.cwd, _apply_cwd))
 
     # ------------- static + index ------------------------------------------
     app.mount(

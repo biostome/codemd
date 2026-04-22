@@ -79,6 +79,13 @@ const els = {
   bgKill: $("#bg-kill"),
   bgLogs: $("#bg-logs"),
   bgLogsRefresh: $("#bg-logs-refresh"),
+  worktreeStatus: $("#worktree-status"),
+  worktreeRefresh: $("#worktree-refresh"),
+  worktreeEnterForm: $("#worktree-enter-form"),
+  worktreeExit: $("#worktree-exit"),
+  worktreeExitAction: $("#worktree-exit-action"),
+  worktreeDiscard: $("#worktree-discard"),
+  worktreeHistory: $("#worktree-history"),
 };
 
 const BgState = { current: null, status: null };
@@ -872,6 +879,92 @@ function setView(view) {
   if (view === "memory") loadMemory();
   if (view === "history") loadHistory();
   if (view === "bg") loadBackgroundList();
+  if (view === "worktree") loadWorktree();
+}
+
+// ---------------------------------------------------------------------------
+// Worktree view
+// ---------------------------------------------------------------------------
+function renderWorktree(payload) {
+  const status = payload.status || {};
+  els.worktreeStatus.classList.toggle("active", !!status.active);
+  const lines = [];
+  const push = (label, value) => {
+    if (value !== null && value !== undefined && value !== "")
+      lines.push(`<span class="label">${label}</span><span class="value">${escapeHtml(String(value))}</span>`);
+  };
+  push("active", status.active ? "yes" : "no");
+  push("detail", status.detail);
+  push("repo_root", status.repo_root);
+  push("current_cwd", status.current_cwd);
+  push("worktree_path", status.worktree_path);
+  push("worktree_branch", status.worktree_branch);
+  push("session_name", status.session_name);
+  push("history_count", status.history_count);
+  els.worktreeStatus.innerHTML = lines.join("\n");
+  els.worktreeExit.disabled = !status.active;
+
+  els.worktreeHistory.innerHTML = "";
+  if (!payload.history.length) {
+    els.worktreeHistory.innerHTML = `<div class="empty-state">No worktree history yet.</div>`;
+  } else {
+    for (const entry of [...payload.history].reverse()) {
+      const row = document.createElement("div");
+      row.className = "history-row";
+      const when = entry.timestamp
+        ? new Date(entry.timestamp).toLocaleString()
+        : "unknown";
+      row.innerHTML = `
+        <span class="history-when">${escapeHtml(when)}</span>
+        <span class="history-tool">${escapeHtml(entry.action || "?")}</span>
+        <span class="history-detail">${escapeHtml(entry.worktree_path || "")}</span>
+        <span class="history-session">${escapeHtml(entry.name || "")}</span>
+      `;
+      els.worktreeHistory.appendChild(row);
+    }
+  }
+}
+
+async function loadWorktree() {
+  try {
+    renderWorktree(await apiGet("/api/worktree"));
+  } catch (e) {
+    setStatus("error", `worktree: ${e.message}`);
+  }
+}
+
+async function enterWorktree(ev) {
+  ev.preventDefault();
+  const fd = new FormData(els.worktreeEnterForm);
+  const name = (fd.get("name") || "").trim() || null;
+  try {
+    setStatus("busy", "Creating worktree…");
+    const data = await apiPost("/api/worktree/enter", { name });
+    renderWorktree(data);
+    els.worktreeEnterForm.reset();
+    setStatus("ready", "Entered worktree");
+    // The agent's cwd just changed under us — refresh state snapshot so the
+    // settings panel and chat footer reflect it.
+    await loadServerState();
+  } catch (e) {
+    setStatus("error", `worktree: ${e.message}`);
+  }
+}
+
+async function exitWorktree() {
+  if (!confirm("Exit the active worktree?")) return;
+  try {
+    setStatus("busy", "Exiting worktree…");
+    const data = await apiPost("/api/worktree/exit", {
+      action: els.worktreeExitAction.value,
+      discard_changes: !!els.worktreeDiscard.checked,
+    });
+    renderWorktree(data);
+    setStatus("ready", "Exited worktree");
+    await loadServerState();
+  } catch (e) {
+    setStatus("error", `worktree: ${e.message}`);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1307,6 +1400,9 @@ function bind() {
   if (els.bgRefresh) els.bgRefresh.addEventListener("click", loadBackgroundList);
   if (els.bgKill) els.bgKill.addEventListener("click", killBackground);
   if (els.bgLogsRefresh) els.bgLogsRefresh.addEventListener("click", loadBackgroundLogs);
+  if (els.worktreeRefresh) els.worktreeRefresh.addEventListener("click", loadWorktree);
+  if (els.worktreeEnterForm) els.worktreeEnterForm.addEventListener("submit", enterWorktree);
+  if (els.worktreeExit) els.worktreeExit.addEventListener("click", exitWorktree);
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && !els.palette.classList.contains("hidden")) {
       closePalette();

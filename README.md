@@ -67,6 +67,7 @@
 | 🆕 | **GUI Memory View** | Browse, edit, create, and delete the discovered `CLAUDE.md` / `.claude/rules/*.md` memory files from a new **Memory** tab; writes are sandboxed to the workspace + `~/.claude` |
 | 🆕 | **GUI File History View** | New **History** tab aggregates `file_history` entries from every saved session (newest first) — one row per shell run / file edit / nested agent call with snapshot ids and changed paths |
 | 🆕 | **GUI Background Sessions** | New **Background** tab lists detached `agent-bg` runs (running/exited/completed/failed), shows live logs, and lets you kill a running session — same `BackgroundSessionRuntime` the CLI uses |
+| 🆕 | **GUI Worktree View** | New **Worktree** tab — show status & history, create a managed `git worktree` (auto-switches the agent's cwd), and exit it (keep or remove); state survives reload via `WorktreeRuntime` |
 | 🆕 | **Daemon Commands** | Local `daemon start/ps/logs/attach/kill` wrapper over background agent sessions |
 | 🆕 | **Background Sessions** | Local `agent-bg`, `agent-ps`, `agent-logs`, `agent-attach`, and `agent-kill` flows |
 | 🆕 | **Testing Guide** | Comprehensive [TESTING_GUIDE.md](TESTING_GUIDE.md) with commands for every feature |

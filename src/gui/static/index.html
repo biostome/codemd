@@ -167,6 +167,7 @@
             <button class="view-tab" data-view="memory" type="button">Memory</button>
             <button class="view-tab" data-view="history" type="button">History</button>
             <button class="view-tab" data-view="bg" type="button">Background</button>
+            <button class="view-tab" data-view="worktree" type="button">Worktree</button>
           </div>
         </div>
         <div class="topbar-right">
@@ -199,6 +200,31 @@
           <span id="usage-meta"></span>
         </div>
       </footer>
+
+      <section id="worktree-view" class="tasks-view view" data-view-name="worktree" hidden>
+        <div class="tasks-toolbar">
+          <h2>Worktree</h2>
+          <button id="worktree-refresh" class="btn-ghost" type="button" title="Refresh">⟳</button>
+        </div>
+        <div id="worktree-status" class="worktree-status">Loading…</div>
+        <form id="worktree-enter-form" class="tasks-create">
+          <input type="text" name="name" placeholder="New worktree slug (optional)…" autocomplete="off" />
+          <button type="submit" class="btn-primary">Enter</button>
+        </form>
+        <div class="worktree-exit-row">
+          <select id="worktree-exit-action">
+            <option value="keep">keep on exit</option>
+            <option value="remove">remove on exit</option>
+          </select>
+          <label class="toggle">
+            <input type="checkbox" id="worktree-discard" />
+            <span>Discard changes</span>
+          </label>
+          <button id="worktree-exit" class="btn-ghost" type="button" disabled>Exit worktree</button>
+        </div>
+        <h3 class="worktree-history-title">History</h3>
+        <div id="worktree-history" class="history-list"></div>
+      </section>
 
       <section id="bg-view" class="tasks-view view" data-view-name="bg" hidden>
         <div class="tasks-toolbar">

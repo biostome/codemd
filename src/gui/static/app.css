@@ -726,6 +726,7 @@ body[data-view="plan"] [data-view-name]:not([data-view-name="plan"]) { display: 
 body[data-view="memory"] [data-view-name]:not([data-view-name="memory"]) { display: none !important; }
 body[data-view="history"] [data-view-name]:not([data-view-name="history"]) { display: none !important; }
 body[data-view="bg"] [data-view-name]:not([data-view-name="bg"]) { display: none !important; }
+body[data-view="worktree"] [data-view-name]:not([data-view-name="worktree"]) { display: none !important; }
 
 /* Tasks panel */
 .tasks-view {
@@ -978,6 +979,40 @@ body[data-view="bg"] [data-view-name]:not([data-view-name="bg"]) { display: none
 .history-tool { color: var(--accent); font-weight: 500; }
 .history-detail { color: var(--text); word-break: break-all; }
 .history-session { color: var(--text-muted); font-size: 10px; font-family: var(--font-mono); text-align: right; }
+
+/* Worktree view */
+.worktree-status {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  white-space: pre-wrap;
+}
+.worktree-status .label { color: var(--text-muted); margin-right: 6px; }
+.worktree-status .value { color: var(--text); }
+.worktree-status.active { border-color: var(--accent); }
+.worktree-exit-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 10px;
+}
+.worktree-exit-row select {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 5px 8px;
+  font: inherit;
+  font-size: 12px;
+}
+.worktree-history-title { margin: 6px 0 0; font-size: 13px; }
 
 /* Palette */
 .palette {
