@@ -78,6 +78,7 @@
 | 🆕 | **GUI Search View** | New **Search** tab — discover providers from `.claw-search.json`/`.claude/search.json`, activate one, and run live SearXNG/Brave/Tavily queries straight from the browser |
 | 🆕 | **GUI Remote Triggers** | New **Triggers** tab — list/create/run remote triggers (manifest-defined or local), record run history; mirrors `RemoteTriggerRuntime` exactly |
 | 🆕 | **GUI Teams View** | New **Teams** tab — create teams with members, send messages between them, view full message history; persisted via `TeamRuntime` |
+| 🆕 | **GUI Diagnostics Tab** | New **Diag** tab — render the existing markdown reports (`summary`, `manifest`, `parity-audit`, `setup-report`, `command-graph`, `tool-pool`, `bootstrap-graph`) on demand without shelling out |
 | 🆕 | **Daemon Commands** | Local `daemon start/ps/logs/attach/kill` wrapper over background agent sessions |
 | 🆕 | **Background Sessions** | Local `agent-bg`, `agent-ps`, `agent-logs`, `agent-attach`, and `agent-kill` flows |
 | 🆕 | **Testing Guide** | Comprehensive [TESTING_GUIDE.md](TESTING_GUIDE.md) with commands for every feature |

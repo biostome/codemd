@@ -737,6 +737,7 @@ body[data-view="workflows"] [data-view-name]:not([data-view-name="workflows"]) {
 body[data-view="search"] [data-view-name]:not([data-view-name="search"]) { display: none !important; }
 body[data-view="triggers"] [data-view-name]:not([data-view-name="triggers"]) { display: none !important; }
 body[data-view="teams"] [data-view-name]:not([data-view-name="teams"]) { display: none !important; }
+body[data-view="diag"] [data-view-name]:not([data-view-name="diag"]) { display: none !important; }
 
 /* Tasks panel */
 .tasks-view {

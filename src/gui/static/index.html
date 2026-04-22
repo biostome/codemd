@@ -178,6 +178,7 @@
             <button class="view-tab" data-view="search" type="button">Search</button>
             <button class="view-tab" data-view="triggers" type="button">Triggers</button>
             <button class="view-tab" data-view="teams" type="button">Teams</button>
+            <button class="view-tab" data-view="diag" type="button">Diag</button>
           </div>
         </div>
         <div class="topbar-right">
@@ -210,6 +211,25 @@
           <span id="usage-meta"></span>
         </div>
       </footer>
+
+      <section id="diag-view" class="tasks-view view" data-view-name="diag" hidden>
+        <div class="tasks-toolbar">
+          <h2>Diagnostics</h2>
+          <button id="diag-refresh" class="btn-ghost" type="button" title="Refresh list">⟳</button>
+        </div>
+        <div class="memory-layout">
+          <aside id="diag-list" class="memory-list">
+            <div class="empty-state">Loading…</div>
+          </aside>
+          <div class="memory-editor">
+            <div class="memory-editor-head">
+              <span id="diag-current" class="memory-current">Pick a report to render</span>
+              <button id="diag-rerun" class="btn-ghost" type="button" disabled>Re-run</button>
+            </div>
+            <textarea id="diag-content" rows="20" placeholder="Report output will appear here…" readonly disabled></textarea>
+          </div>
+        </div>
+      </section>
 
       <section id="teams-view" class="tasks-view view" data-view-name="teams" hidden>
         <div class="tasks-toolbar">

@@ -131,7 +131,14 @@ const els = {
   teamsSendTeam: $("#teams-send-team"),
   teamsMessages: $("#teams-messages"),
   teamsRefresh: $("#teams-refresh"),
+  diagList: $("#diag-list"),
+  diagContent: $("#diag-content"),
+  diagCurrent: $("#diag-current"),
+  diagRerun: $("#diag-rerun"),
+  diagRefresh: $("#diag-refresh"),
 };
+
+const DiagState = { current: null };
 
 const BgState = { current: null, status: null };
 
@@ -935,6 +942,53 @@ function setView(view) {
   if (view === "search") loadSearchView();
   if (view === "triggers") loadRemoteTriggers();
   if (view === "teams") loadTeams();
+  if (view === "diag") loadDiagnosticsList();
+}
+
+// ---------------------------------------------------------------------------
+// Diagnostics view
+// ---------------------------------------------------------------------------
+async function loadDiagnosticsList() {
+  try {
+    const data = await apiGet("/api/diagnostics");
+    els.diagList.innerHTML = "";
+    for (const r of data.reports) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "memory-item";
+      if (DiagState.current === r.name) btn.classList.add("active");
+      btn.innerHTML = `
+        <span class="memory-item-name">${escapeHtml(r.label)}</span>
+        <span class="memory-item-path">${escapeHtml(r.name)}</span>
+      `;
+      btn.addEventListener("click", () => loadDiagnostic(r.name));
+      els.diagList.appendChild(btn);
+    }
+  } catch (e) {
+    setStatus("error", `diag: ${e.message}`);
+  }
+}
+
+async function loadDiagnostic(name) {
+  DiagState.current = name;
+  els.diagContent.disabled = false;
+  els.diagRerun.disabled = false;
+  els.diagCurrent.textContent = `Rendering ${name}…`;
+  els.diagContent.value = "";
+  try {
+    const r = await fetch(`/api/diagnostics/${encodeURIComponent(name)}`);
+    const data = await r.json();
+    if (!r.ok) {
+      els.diagCurrent.textContent = `${name} (error)`;
+      els.diagContent.value = data.detail || `${r.status}`;
+      return;
+    }
+    els.diagCurrent.textContent = `${data.label} (${name})`;
+    els.diagContent.value = data.content || "(empty)";
+    await loadDiagnosticsList();
+  } catch (e) {
+    setStatus("error", `diag: ${e.message}`);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -2400,6 +2454,8 @@ function bind() {
   if (els.teamsRefresh) els.teamsRefresh.addEventListener("click", loadTeams);
   if (els.teamsCreateForm) els.teamsCreateForm.addEventListener("submit", createTeam);
   if (els.teamsSendForm) els.teamsSendForm.addEventListener("submit", sendTeamMessage);
+  if (els.diagRefresh) els.diagRefresh.addEventListener("click", loadDiagnosticsList);
+  if (els.diagRerun) els.diagRerun.addEventListener("click", () => DiagState.current && loadDiagnostic(DiagState.current));
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && !els.palette.classList.contains("hidden")) {
       closePalette();

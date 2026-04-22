@@ -42,6 +42,7 @@ from ..session_store import (
 from .account_routes import create_account_router
 from .ask_user_routes import create_ask_user_router
 from .background_routes import create_background_router
+from .diagnostics_routes import create_diagnostics_router
 from .mcp_routes import create_mcp_router
 from .memory_routes import MemoryPathContext, create_memory_router
 from .plans_routes import create_plans_router
@@ -517,6 +518,7 @@ def create_app(state: AgentState) -> FastAPI:
             lambda: state.additional_working_directories,
         )
     )
+    app.include_router(create_diagnostics_router())
 
     # ------------- static + index ------------------------------------------
     app.mount(
