@@ -95,6 +95,12 @@ const els = {
   accountLogout: $("#account-logout"),
   accountProfiles: $("#account-profiles"),
   accountHistory: $("#account-history"),
+  remoteStatus: $("#remote-status"),
+  remoteRefresh: $("#remote-refresh"),
+  remoteConnectForm: $("#remote-connect-form"),
+  remoteDisconnect: $("#remote-disconnect"),
+  remoteProfiles: $("#remote-profiles"),
+  remoteHistory: $("#remote-history"),
 };
 
 const BgState = { current: null, status: null };
@@ -891,6 +897,116 @@ function setView(view) {
   if (view === "worktree") loadWorktree();
   if (view === "skills") loadSkillsView();
   if (view === "account") loadAccount();
+  if (view === "remote") loadRemote();
+}
+
+// ---------------------------------------------------------------------------
+// Remote view (mirrors account view very closely)
+// ---------------------------------------------------------------------------
+function renderRemote(payload) {
+  const status = payload.status || {};
+  els.remoteStatus.classList.toggle("active", !!status.connected);
+  const lines = [];
+  const push = (label, value) => {
+    if (value !== null && value !== undefined && value !== "")
+      lines.push(`<span class="label">${label}</span><span class="value">${escapeHtml(String(value))}</span>`);
+  };
+  push("connected", status.connected ? "yes" : "no");
+  push("mode", status.mode);
+  push("detail", status.detail);
+  push("target", status.target);
+  push("profile", status.profile_name);
+  push("workspace_cwd", status.workspace_cwd);
+  push("session_url", status.session_url);
+  push("manifests", status.manifest_count);
+  push("profiles", status.profile_count);
+  els.remoteStatus.innerHTML = lines.join("\n");
+  els.remoteDisconnect.disabled = !status.connected;
+
+  els.remoteProfiles.innerHTML = "";
+  if (!payload.profiles.length) {
+    els.remoteProfiles.innerHTML = `<div class="empty-state">No remote profiles found in <code>.claw-remote.json</code>/<code>.remote.json</code>.</div>`;
+  } else {
+    for (const profile of payload.profiles) {
+      const card = document.createElement("div");
+      card.className = "skill-card";
+      card.innerHTML = `
+        <span class="skill-name">${escapeHtml(profile.name)}</span>
+        <span class="skill-desc">${escapeHtml(profile.description || "")}</span>
+        <div class="skill-meta">
+          <span class="skill-meta-pill">mode: ${escapeHtml(profile.mode || "?")}</span>
+          <span class="skill-meta-pill">target: ${escapeHtml(profile.target || "?")}</span>
+        </div>
+        <div class="skill-actions">
+          <button data-act="connect">Connect</button>
+        </div>
+      `;
+      card.querySelector('[data-act="connect"]').addEventListener("click", () =>
+        connectRemote({ target: profile.name })
+      );
+      els.remoteProfiles.appendChild(card);
+    }
+  }
+
+  els.remoteHistory.innerHTML = "";
+  if (!payload.history.length) {
+    els.remoteHistory.innerHTML = `<div class="empty-state">No connection history yet.</div>`;
+  } else {
+    for (const entry of [...payload.history].reverse()) {
+      const row = document.createElement("div");
+      row.className = "history-row";
+      const when = entry.connected_at || entry.disconnected_at || "unknown";
+      const detail = `${entry.mode || "?"} ${entry.target || "?"}` +
+        (entry.profile_name ? ` (${entry.profile_name})` : "");
+      row.innerHTML = `
+        <span class="history-when">${escapeHtml(when)}</span>
+        <span class="history-tool">${escapeHtml(entry.action || "?")}</span>
+        <span class="history-detail">${escapeHtml(detail)}</span>
+        <span class="history-session">${escapeHtml(entry.reason || "")}</span>
+      `;
+      els.remoteHistory.appendChild(row);
+    }
+  }
+}
+
+async function loadRemote() {
+  try {
+    renderRemote(await apiGet("/api/remote"));
+  } catch (e) {
+    setStatus("error", `remote: ${e.message}`);
+  }
+}
+
+async function connectRemote(body) {
+  try {
+    setStatus("busy", "Connecting…");
+    const data = await apiPost("/api/remote/connect", body);
+    renderRemote(data);
+    setStatus("ready", "Connected");
+  } catch (e) {
+    setStatus("error", `remote: ${e.message}`);
+  }
+}
+
+async function connectRemoteForm(ev) {
+  ev.preventDefault();
+  const fd = new FormData(els.remoteConnectForm);
+  const body = { target: (fd.get("target") || "").trim() };
+  if (!body.target) return;
+  const mode = (fd.get("mode") || "").trim();
+  if (mode) body.mode = mode;
+  await connectRemote(body);
+  els.remoteConnectForm.reset();
+}
+
+async function disconnectRemote() {
+  try {
+    const data = await apiPost("/api/remote/disconnect", { reason: "manual_disconnect" });
+    renderRemote(data);
+    setStatus("ready", "Disconnected");
+  } catch (e) {
+    setStatus("error", `remote: ${e.message}`);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1587,6 +1703,9 @@ function bind() {
   if (els.accountRefresh) els.accountRefresh.addEventListener("click", loadAccount);
   if (els.accountLoginForm) els.accountLoginForm.addEventListener("submit", loginAccountForm);
   if (els.accountLogout) els.accountLogout.addEventListener("click", logoutAccount);
+  if (els.remoteRefresh) els.remoteRefresh.addEventListener("click", loadRemote);
+  if (els.remoteConnectForm) els.remoteConnectForm.addEventListener("submit", connectRemoteForm);
+  if (els.remoteDisconnect) els.remoteDisconnect.addEventListener("click", disconnectRemote);
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && !els.palette.classList.contains("hidden")) {
       closePalette();

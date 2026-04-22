@@ -170,6 +170,7 @@
             <button class="view-tab" data-view="worktree" type="button">Worktree</button>
             <button class="view-tab" data-view="skills" type="button">Skills</button>
             <button class="view-tab" data-view="account" type="button">Accounts</button>
+            <button class="view-tab" data-view="remote" type="button">Remote</button>
           </div>
         </div>
         <div class="topbar-right">
@@ -202,6 +203,31 @@
           <span id="usage-meta"></span>
         </div>
       </footer>
+
+      <section id="remote-view" class="tasks-view view" data-view-name="remote" hidden>
+        <div class="tasks-toolbar">
+          <h2>Remote profiles</h2>
+          <button id="remote-refresh" class="btn-ghost" type="button" title="Refresh">⟳</button>
+        </div>
+        <div id="remote-status" class="worktree-status">Loading…</div>
+        <form id="remote-connect-form" class="tasks-create">
+          <input type="text" name="target" placeholder="Profile name or target (e.g. user@host)" autocomplete="off" required />
+          <select name="mode">
+            <option value="">mode…</option>
+            <option value="remote">remote</option>
+            <option value="ssh">ssh</option>
+            <option value="teleport">teleport</option>
+            <option value="direct-connect">direct-connect</option>
+            <option value="deep-link">deep-link</option>
+          </select>
+          <button type="submit" class="btn-primary">Connect</button>
+          <button id="remote-disconnect" type="button" class="btn-ghost" disabled>Disconnect</button>
+        </form>
+        <h3 class="worktree-history-title">Profiles</h3>
+        <div id="remote-profiles" class="skills-grid"></div>
+        <h3 class="worktree-history-title">History</h3>
+        <div id="remote-history" class="history-list"></div>
+      </section>
 
       <section id="account-view" class="tasks-view view" data-view-name="account" hidden>
         <div class="tasks-toolbar">
