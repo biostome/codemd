@@ -52,7 +52,17 @@ const els = {
   tasksCounts: $("#tasks-counts"),
   tasksRefresh: $("#tasks-refresh"),
   viewTabs: document.querySelectorAll(".view-tab"),
+  planSteps: $("#plan-steps"),
+  planExplanation: $("#plan-explanation"),
+  planMeta: $("#plan-meta"),
+  planSave: $("#plan-save"),
+  planClear: $("#plan-clear"),
+  planRefresh: $("#plan-refresh"),
+  planAddStep: $("#plan-add-step"),
+  planSyncTasks: $("#plan-sync-tasks"),
 };
+
+const PLAN_STATUSES = ["pending", "in_progress", "completed", "blocked", "cancelled"];
 
 // ---------------------------------------------------------------------------
 // API helpers
@@ -835,6 +845,125 @@ function setView(view) {
     tab.classList.toggle("active", tab.dataset.view === view);
   }
   if (view === "tasks") loadTasks();
+  if (view === "plan") loadPlan();
+}
+
+// ---------------------------------------------------------------------------
+// Plan view
+// ---------------------------------------------------------------------------
+function makePlanRow(step, index) {
+  const row = document.createElement("div");
+  row.className = "plan-step-row";
+  row.dataset.index = index;
+  row.innerHTML = `
+    <span class="plan-step-index">${index + 1}.</span>
+    <input type="text" name="step" placeholder="Step description…" />
+    <select name="status"></select>
+    <input type="text" name="priority" placeholder="priority" />
+    <button type="button" class="plan-step-remove" title="Remove">✕</button>
+  `;
+  const sel = row.querySelector('select[name="status"]');
+  for (const s of PLAN_STATUSES) {
+    const opt = document.createElement("option");
+    opt.value = s;
+    opt.textContent = s;
+    sel.appendChild(opt);
+  }
+  row.querySelector('input[name="step"]').value = step.step || "";
+  row.querySelector('select[name="status"]').value = step.status || "pending";
+  row.querySelector('input[name="priority"]').value = step.priority || "";
+  row.querySelector(".plan-step-remove").addEventListener("click", () => {
+    row.remove();
+    renumberPlanRows();
+  });
+  return row;
+}
+
+function renumberPlanRows() {
+  const rows = els.planSteps.querySelectorAll(".plan-step-row");
+  rows.forEach((row, i) => {
+    row.dataset.index = i;
+    row.querySelector(".plan-step-index").textContent = `${i + 1}.`;
+  });
+}
+
+function renderPlan(payload) {
+  els.planExplanation.value = payload.explanation || "";
+  els.planSteps.innerHTML = "";
+  for (let i = 0; i < (payload.steps || []).length; i++) {
+    els.planSteps.appendChild(makePlanRow(payload.steps[i], i));
+  }
+  if (!els.planSteps.children.length) {
+    els.planSteps.appendChild(makePlanRow({}, 0));
+  }
+  els.planMeta.textContent = payload.updated_at
+    ? `updated ${new Date(payload.updated_at).toLocaleString()}`
+    : "no plan saved yet";
+}
+
+async function loadPlan() {
+  try {
+    renderPlan(await apiGet("/api/plan"));
+  } catch (e) {
+    setStatus("error", `plan: ${e.message}`);
+  }
+}
+
+function collectPlan() {
+  const rows = els.planSteps.querySelectorAll(".plan-step-row");
+  const steps = [];
+  for (const row of rows) {
+    const step = (row.querySelector('input[name="step"]').value || "").trim();
+    if (!step) continue;
+    const entry = {
+      step,
+      status: row.querySelector('select[name="status"]').value || "pending",
+    };
+    const priority = (row.querySelector('input[name="priority"]').value || "").trim();
+    if (priority) entry.priority = priority;
+    steps.push(entry);
+  }
+  return {
+    steps,
+    explanation: (els.planExplanation.value || "").trim() || null,
+    sync_tasks: !!els.planSyncTasks.checked,
+  };
+}
+
+async function savePlan() {
+  try {
+    setStatus("busy", "Saving plan…");
+    // Plan replace is a PUT, so we go around the apiPost helper.
+    const r = await fetch("/api/plan", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(collectPlan()),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      setStatus("error", data.detail || `${r.status} ${r.statusText}`);
+      return;
+    }
+    renderPlan(data);
+    setStatus("ready", "Plan saved");
+    if (els.planSyncTasks.checked) await loadTasks();
+  } catch (e) {
+    setStatus("error", `plan: ${e.message}`);
+  }
+}
+
+async function clearPlan() {
+  if (!confirm("Clear the entire plan?")) return;
+  try {
+    const data = await apiPost("/api/plan/clear", {
+      sync_tasks: !!els.planSyncTasks.checked,
+    });
+    renderPlan(data);
+    if (els.planSyncTasks.checked) await loadTasks();
+    setStatus("ready", "Plan cleared");
+  } catch (e) {
+    setStatus("error", `plan: ${e.message}`);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -874,6 +1003,13 @@ function bind() {
   }
   if (els.tasksCreate) els.tasksCreate.addEventListener("submit", createTask);
   if (els.tasksRefresh) els.tasksRefresh.addEventListener("click", loadTasks);
+  if (els.planSave) els.planSave.addEventListener("click", savePlan);
+  if (els.planClear) els.planClear.addEventListener("click", clearPlan);
+  if (els.planRefresh) els.planRefresh.addEventListener("click", loadPlan);
+  if (els.planAddStep) els.planAddStep.addEventListener("click", () => {
+    const idx = els.planSteps.querySelectorAll(".plan-step-row").length;
+    els.planSteps.appendChild(makePlanRow({}, idx));
+  });
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && !els.palette.classList.contains("hidden")) {
       closePalette();

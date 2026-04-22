@@ -715,9 +715,13 @@ body {
   color: var(--accent);
 }
 
-/* Hide chat surfaces when in tasks view, tasks surface when in chat view */
-body[data-view="tasks"] .view-chat { display: none !important; }
-body[data-view="chat"] .view-tasks { display: none !important; }
+/* View routing — only the surfaces matching data-view stay visible. */
+body[data-view="chat"] .view-tasks,
+body[data-view="chat"] .view-plan { display: none !important; }
+body[data-view="tasks"] .view-chat,
+body[data-view="tasks"] .view-plan { display: none !important; }
+body[data-view="plan"] .view-chat,
+body[data-view="plan"] .view-tasks { display: none !important; }
 
 /* Tasks panel */
 .tasks-view {
@@ -836,6 +840,58 @@ body[data-view="chat"] .view-tasks { display: none !important; }
   color: var(--text);
   border-color: var(--accent);
 }
+
+/* Plan view */
+.plan-explanation { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--text-dim); }
+.plan-explanation textarea {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  padding: 7px 9px;
+  font: inherit;
+  font-size: 12px;
+  resize: vertical;
+}
+.plan-steps { display: flex; flex-direction: column; gap: 8px; }
+.plan-step-row {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  display: grid;
+  grid-template-columns: 28px 1fr 110px 100px auto;
+  gap: 8px;
+  align-items: center;
+}
+.plan-step-index { color: var(--text-muted); font-family: var(--font-mono); font-size: 11px; }
+.plan-step-row input,
+.plan-step-row select {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  padding: 5px 7px;
+  font: inherit;
+  font-size: 12px;
+  min-width: 0;
+}
+.plan-step-row .plan-step-remove {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 11px;
+}
+.plan-step-row .plan-step-remove:hover { color: var(--error); border-color: var(--error); }
+.plan-footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.plan-meta { color: var(--text-muted); font-size: 11px; margin-left: auto; }
 
 /* Palette */
 .palette {

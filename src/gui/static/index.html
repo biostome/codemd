@@ -163,6 +163,7 @@
           <div class="view-tabs">
             <button class="view-tab active" data-view="chat" type="button">Chat</button>
             <button class="view-tab" data-view="tasks" type="button">Tasks</button>
+            <button class="view-tab" data-view="plan" type="button">Plan</button>
           </div>
         </div>
         <div class="topbar-right">
@@ -195,6 +196,30 @@
           <span id="usage-meta"></span>
         </div>
       </footer>
+
+      <section id="plan-view" class="tasks-view view view-plan" hidden>
+        <div class="tasks-toolbar">
+          <h2>Plan</h2>
+          <div style="display:flex; gap:6px;">
+            <button id="plan-add-step" class="btn-ghost" type="button">+ Step</button>
+            <button id="plan-refresh" class="btn-ghost" type="button" title="Refresh">⟳</button>
+            <button id="plan-clear" class="btn-ghost" type="button" title="Clear plan">🗑</button>
+          </div>
+        </div>
+        <label class="plan-explanation">
+          <span>Explanation</span>
+          <textarea id="plan-explanation" rows="2" placeholder="Why this plan…"></textarea>
+        </label>
+        <div id="plan-steps" class="plan-steps"></div>
+        <div class="plan-footer">
+          <label class="toggle">
+            <input type="checkbox" id="plan-sync-tasks" checked />
+            <span>Sync to tasks on save</span>
+          </label>
+          <button id="plan-save" class="btn-primary" type="button">Save plan</button>
+          <span id="plan-meta" class="plan-meta"></span>
+        </div>
+      </section>
 
       <section id="tasks-view" class="tasks-view view view-tasks" hidden>
         <div class="tasks-toolbar">

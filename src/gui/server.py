@@ -39,6 +39,7 @@ from ..session_store import (
     StoredAgentSession,
     load_agent_session,
 )
+from .plans_routes import create_plans_router
 from .tasks_routes import create_tasks_router
 
 
@@ -433,6 +434,7 @@ def create_app(state: AgentState) -> FastAPI:
     app = FastAPI(title='Claw Code GUI', version='1.0')
 
     app.include_router(create_tasks_router(lambda: state.cwd))
+    app.include_router(create_plans_router(lambda: state.cwd))
 
     # ------------- static + index ------------------------------------------
     app.mount(
