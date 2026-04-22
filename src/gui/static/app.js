@@ -46,6 +46,12 @@ const els = {
   paletteList: $("#palette-list"),
   paletteClose: $("#palette-close"),
   pasteChips: $("#paste-chips"),
+  tasksView: $("#tasks-view"),
+  tasksCreate: $("#tasks-create"),
+  tasksList: $("#tasks-list"),
+  tasksCounts: $("#tasks-counts"),
+  tasksRefresh: $("#tasks-refresh"),
+  viewTabs: document.querySelectorAll(".view-tab"),
 };
 
 // ---------------------------------------------------------------------------
@@ -704,6 +710,134 @@ function renderRunResult(data) {
 }
 
 // ---------------------------------------------------------------------------
+// Tasks view
+// ---------------------------------------------------------------------------
+function renderTasks(payload) {
+  const tasks = payload.tasks || [];
+  els.tasksCounts.innerHTML = "";
+  const counts = payload.counts || {};
+  for (const status of ["pending", "in_progress", "blocked", "completed", "cancelled"]) {
+    const n = counts[status] || 0;
+    if (!n) continue;
+    const chip = document.createElement("span");
+    chip.className = "tasks-count-chip";
+    chip.innerHTML = `<strong>${n}</strong>${status.replace("_", " ")}`;
+    els.tasksCounts.appendChild(chip);
+  }
+
+  els.tasksList.innerHTML = "";
+  if (!tasks.length) {
+    els.tasksList.innerHTML = `<div class="empty-state">No tasks yet — add one above.</div>`;
+    return;
+  }
+  for (const task of tasks) {
+    const card = document.createElement("div");
+    card.className = `task-card status-${task.status}`;
+    if (task.is_next_actionable) card.classList.add("is-actionable");
+
+    const status = document.createElement("span");
+    status.className = `task-status status-${task.status}`;
+    status.textContent = task.status;
+
+    const body = document.createElement("div");
+    body.className = "task-body";
+    const title = document.createElement("div");
+    title.className = "task-title";
+    title.textContent = task.title;
+    body.appendChild(title);
+    if (task.description) {
+      const desc = document.createElement("div");
+      desc.className = "task-meta";
+      desc.textContent = task.description;
+      body.appendChild(desc);
+    }
+    const meta = document.createElement("div");
+    meta.className = "task-meta";
+    const bits = [`id ${task.task_id}`];
+    if (task.priority) bits.push(`priority ${task.priority}`);
+    if (task.owner) bits.push(`owner ${task.owner}`);
+    if (task.blocked_by && task.blocked_by.length)
+      bits.push(`blocked by ${task.blocked_by.join(", ")}`);
+    if (task.metadata && task.metadata.cancel_reason)
+      bits.push(`reason: ${task.metadata.cancel_reason}`);
+    meta.textContent = bits.join(" · ");
+    body.appendChild(meta);
+
+    const actions = document.createElement("div");
+    actions.className = "task-actions";
+    if (task.status === "pending") {
+      const start = document.createElement("button");
+      start.textContent = "Start";
+      start.addEventListener("click", () => taskAction(task.task_id, "start"));
+      actions.appendChild(start);
+    }
+    if (task.status !== "completed" && task.status !== "cancelled") {
+      const done = document.createElement("button");
+      done.textContent = "Done";
+      done.addEventListener("click", () => taskAction(task.task_id, "complete"));
+      actions.appendChild(done);
+
+      const cancel = document.createElement("button");
+      cancel.textContent = "Cancel";
+      cancel.addEventListener("click", async () => {
+        const reason = prompt("Cancel reason (optional)") || null;
+        await taskAction(task.task_id, "cancel", { reason });
+      });
+      actions.appendChild(cancel);
+    }
+    card.appendChild(status);
+    card.appendChild(body);
+    card.appendChild(actions);
+    els.tasksList.appendChild(card);
+  }
+}
+
+async function loadTasks() {
+  try {
+    const payload = await apiGet("/api/tasks");
+    renderTasks(payload);
+  } catch (e) {
+    els.tasksList.innerHTML = `<div class="empty-state">${escapeHtml(e.message)}</div>`;
+  }
+}
+
+async function taskAction(id, action, body) {
+  try {
+    const payload = await apiPost(`/api/tasks/${encodeURIComponent(id)}/${action}`, body || {});
+    if (payload.state) renderTasks(payload.state);
+    else await loadTasks();
+  } catch (e) {
+    setStatus("error", `task: ${e.message}`);
+  }
+}
+
+async function createTask(ev) {
+  ev.preventDefault();
+  const fd = new FormData(els.tasksCreate);
+  const title = (fd.get("title") || "").trim();
+  if (!title) return;
+  const body = { title };
+  const priority = (fd.get("priority") || "").trim();
+  if (priority) body.priority = priority;
+  try {
+    const payload = await apiPost("/api/tasks", body);
+    els.tasksCreate.reset();
+    if (payload.state) renderTasks(payload.state);
+    else await loadTasks();
+  } catch (e) {
+    setStatus("error", `task: ${e.message}`);
+  }
+}
+
+function setView(view) {
+  document.body.dataset.view = view;
+  for (const tab of els.viewTabs) {
+    tab.classList.toggle("active", tab.dataset.view === view);
+  }
+  if (view === "tasks") loadTasks();
+}
+
+// ---------------------------------------------------------------------------
 // Wire up
 // ---------------------------------------------------------------------------
 function bind() {
@@ -735,6 +869,11 @@ function bind() {
     if (e.target === els.palette) closePalette();
   });
   els.paletteSearch.addEventListener("input", (e) => renderPalette(e.target.value));
+  for (const tab of els.viewTabs) {
+    tab.addEventListener("click", () => setView(tab.dataset.view));
+  }
+  if (els.tasksCreate) els.tasksCreate.addEventListener("submit", createTask);
+  if (els.tasksRefresh) els.tasksRefresh.addEventListener("click", loadTasks);
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && !els.palette.classList.contains("hidden")) {
       closePalette();
@@ -748,6 +887,7 @@ function bind() {
 
 async function init() {
   bind();
+  setView("chat");
   setStatus("ready", "Ready");
   await Promise.all([
     loadServerState(),

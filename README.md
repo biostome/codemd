@@ -62,6 +62,7 @@
 | 🆕 | **GUI Budgets & Limits** | Advanced settings disclosure for every `BudgetConfig` field: cost ceiling, token budgets, tool/model call caps, delegated task cap, session turn cap — blank input clears the limit |
 | 🆕 | **GUI System Prompt & Schema** | Custom / append / override system prompts and a structured-output JSON schema editor (with strict toggle) live-editable in the settings panel |
 | 🆕 | **GUI Context Management** | Auto-snip / auto-compact thresholds, compact-preserve count, CLAUDE.md discovery toggle, and additional working directories — all editable from the settings panel and the new `--auto-snip-threshold` / `--auto-compact-threshold` / `--add-dir` flags |
+| 🆕 | **GUI Tasks View** | Browse, create, start, complete, and cancel local tasks from a new **Tasks** tab; mutations call straight into `TaskRuntime` so completing a task auto-unblocks dependents just like the slash-command path |
 | 🆕 | **Daemon Commands** | Local `daemon start/ps/logs/attach/kill` wrapper over background agent sessions |
 | 🆕 | **Background Sessions** | Local `agent-bg`, `agent-ps`, `agent-logs`, `agent-attach`, and `agent-kill` flows |
 | 🆕 | **Testing Guide** | Comprehensive [TESTING_GUIDE.md](TESTING_GUIDE.md) with commands for every feature |
@@ -782,6 +783,7 @@ The GUI surfaces:
 - usage / cost meta in the composer footer
 - pasted-content collapsing — see below
 - runtime knobs: temperature, timeout, streaming toggle, max turns
+- a **Tasks** tab in the topbar — list / create / start / complete / cancel against `.port_sessions/task_runtime.json`
 
 ### Paste large content
 

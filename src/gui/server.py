@@ -39,6 +39,7 @@ from ..session_store import (
     StoredAgentSession,
     load_agent_session,
 )
+from .tasks_routes import create_tasks_router
 
 
 STATIC_DIR = Path(__file__).parent / 'static'
@@ -430,6 +431,8 @@ class StateUpdate(BaseModel):
 
 def create_app(state: AgentState) -> FastAPI:
     app = FastAPI(title='Claw Code GUI', version='1.0')
+
+    app.include_router(create_tasks_router(lambda: state.cwd))
 
     # ------------- static + index ------------------------------------------
     app.mount(

@@ -160,6 +160,10 @@
         <div class="topbar-left">
           <span class="status-dot" id="status-dot"></span>
           <span id="status-text">Ready</span>
+          <div class="view-tabs">
+            <button class="view-tab active" data-view="chat" type="button">Chat</button>
+            <button class="view-tab" data-view="tasks" type="button">Tasks</button>
+          </div>
         </div>
         <div class="topbar-right">
           <button id="slash-btn" class="btn-ghost" type="button" title="Slash commands">/</button>
@@ -168,14 +172,14 @@
         </div>
       </header>
 
-      <section id="chat" class="chat">
+      <section id="chat" class="chat view view-chat">
         <div id="welcome" class="welcome">
           <h1>Claw Code</h1>
           <p>Type a message below to start. Use the <code>/</code> button for slash commands or <code>★</code> for skills.</p>
         </div>
       </section>
 
-      <footer class="composer">
+      <footer id="composer" class="composer view-chat">
         <div id="paste-chips" class="paste-chips" hidden></div>
         <div class="composer-inner">
           <textarea
@@ -191,6 +195,25 @@
           <span id="usage-meta"></span>
         </div>
       </footer>
+
+      <section id="tasks-view" class="tasks-view view view-tasks" hidden>
+        <div class="tasks-toolbar">
+          <h2>Tasks</h2>
+          <button id="tasks-refresh" class="btn-ghost" type="button" title="Refresh">⟳</button>
+        </div>
+        <form id="tasks-create" class="tasks-create">
+          <input type="text" name="title" placeholder="New task title…" autocomplete="off" required />
+          <select name="priority">
+            <option value="">priority…</option>
+            <option value="high">high</option>
+            <option value="medium">medium</option>
+            <option value="low">low</option>
+          </select>
+          <button type="submit" class="btn-primary">Add</button>
+        </form>
+        <div id="tasks-counts" class="tasks-counts"></div>
+        <div id="tasks-list" class="tasks-list"></div>
+      </section>
     </main>
   </div>
 
