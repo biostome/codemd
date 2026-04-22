@@ -282,6 +282,16 @@ function applyServerState(state) {
   }
   if (f.response_schema_name) f.response_schema_name.value = state.response_schema_name || "response";
   if (f.response_schema_strict) f.response_schema_strict.checked = !!state.response_schema_strict;
+  if (f.auto_snip_threshold_tokens)
+    f.auto_snip_threshold_tokens.value = state.auto_snip_threshold_tokens == null ? "" : state.auto_snip_threshold_tokens;
+  if (f.auto_compact_threshold_tokens)
+    f.auto_compact_threshold_tokens.value = state.auto_compact_threshold_tokens == null ? "" : state.auto_compact_threshold_tokens;
+  if (f.compact_preserve_messages)
+    f.compact_preserve_messages.value = state.compact_preserve_messages ?? 4;
+  if (f.disable_claude_md_discovery)
+    f.disable_claude_md_discovery.checked = !!state.disable_claude_md_discovery;
+  if (f.additional_working_directories)
+    f.additional_working_directories.value = (state.additional_working_directories || []).join("\n");
   els.cwdMeta.textContent = `cwd: ${state.cwd || "?"}`;
 }
 
@@ -342,6 +352,24 @@ async function saveSettings(ev) {
     if (raw) payload.response_schema_name = raw;
   }
   if (f.response_schema_strict) payload.response_schema_strict = f.response_schema_strict.checked;
+  // Context-management knobs.
+  for (const name of ["auto_snip_threshold_tokens", "auto_compact_threshold_tokens"]) {
+    if (!f[name]) continue;
+    const raw = fd.get(name);
+    payload[name] = raw === null || raw === "" ? null : Number(raw);
+  }
+  if (f.compact_preserve_messages) {
+    const raw = fd.get("compact_preserve_messages");
+    if (raw !== null && raw !== "") payload.compact_preserve_messages = Number(raw);
+  }
+  if (f.disable_claude_md_discovery)
+    payload.disable_claude_md_discovery = f.disable_claude_md_discovery.checked;
+  if (f.additional_working_directories) {
+    const raw = (fd.get("additional_working_directories") || "").trim();
+    payload.additional_working_directories = raw
+      ? raw.split(/\r?\n/).map((s) => s.trim()).filter(Boolean)
+      : [];
+  }
   try {
     setStatus("busy", "Saving settings…");
     const state = await apiPost("/api/state", payload);

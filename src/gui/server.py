@@ -80,6 +80,11 @@ class AgentState:
         response_schema: dict[str, Any] | None = None,
         response_schema_name: str = 'response',
         response_schema_strict: bool = False,
+        auto_snip_threshold_tokens: int | None = None,
+        auto_compact_threshold_tokens: int | None = None,
+        compact_preserve_messages: int = 4,
+        disable_claude_md_discovery: bool = False,
+        additional_working_directories: tuple[Path, ...] = (),
     ) -> None:
         self.cwd = cwd.resolve()
         self.session_directory = session_directory
@@ -109,6 +114,11 @@ class AgentState:
         self.response_schema = response_schema
         self.response_schema_name = response_schema_name
         self.response_schema_strict = response_schema_strict
+        self.auto_snip_threshold_tokens = auto_snip_threshold_tokens
+        self.auto_compact_threshold_tokens = auto_compact_threshold_tokens
+        self.compact_preserve_messages = compact_preserve_messages
+        self.disable_claude_md_discovery = disable_claude_md_discovery
+        self.additional_working_directories = tuple(additional_working_directories)
         self._build_agent()
 
     def _build_agent(self) -> None:
@@ -142,6 +152,11 @@ class AgentState:
             max_turns=self.max_turns,
             budget_config=budget_config,
             output_schema=output_schema,
+            auto_snip_threshold_tokens=self.auto_snip_threshold_tokens,
+            auto_compact_threshold_tokens=self.auto_compact_threshold_tokens,
+            compact_preserve_messages=self.compact_preserve_messages,
+            disable_claude_md_discovery=self.disable_claude_md_discovery,
+            additional_working_directories=self.additional_working_directories,
         )
         model_config = ModelConfig(
             model=self.model,
@@ -195,6 +210,13 @@ class AgentState:
         response_schema: Any = _UNSET,
         response_schema_name: str | None = None,
         response_schema_strict: bool | None = None,
+        # Context-management knobs.  Threshold values are sentinel-based since
+        # `None` is meaningful (= "no automatic snip/compact").
+        auto_snip_threshold_tokens: Any = _UNSET,
+        auto_compact_threshold_tokens: Any = _UNSET,
+        compact_preserve_messages: int | None = None,
+        disable_claude_md_discovery: bool | None = None,
+        additional_working_directories: list[str] | None = None,
     ) -> None:
         with self._lock:
             if model is not None:
@@ -273,6 +295,32 @@ class AgentState:
             if response_schema_strict is not None:
                 self.response_schema_strict = bool(response_schema_strict)
 
+            for name, value in (
+                ('auto_snip_threshold_tokens', auto_snip_threshold_tokens),
+                ('auto_compact_threshold_tokens', auto_compact_threshold_tokens),
+            ):
+                if value is _UNSET:
+                    continue
+                if value is not None:
+                    if not isinstance(value, int) or isinstance(value, bool) or value <= 0:
+                        raise ValueError(f'{name} must be a positive integer or null')
+                setattr(self, name, value)
+
+            if compact_preserve_messages is not None:
+                if compact_preserve_messages < 0:
+                    raise ValueError('compact_preserve_messages must be >= 0')
+                self.compact_preserve_messages = compact_preserve_messages
+            if disable_claude_md_discovery is not None:
+                self.disable_claude_md_discovery = bool(disable_claude_md_discovery)
+            if additional_working_directories is not None:
+                resolved: list[Path] = []
+                for raw in additional_working_directories:
+                    p = Path(raw).expanduser().resolve()
+                    if not p.is_dir():
+                        raise ValueError(f'additional working dir does not exist: {p}')
+                    resolved.append(p)
+                self.additional_working_directories = tuple(resolved)
+
             self._build_agent()
 
     def snapshot(self) -> dict[str, Any]:
@@ -302,6 +350,13 @@ class AgentState:
             'response_schema': self.response_schema,
             'response_schema_name': self.response_schema_name,
             'response_schema_strict': self.response_schema_strict,
+            'auto_snip_threshold_tokens': self.auto_snip_threshold_tokens,
+            'auto_compact_threshold_tokens': self.auto_compact_threshold_tokens,
+            'compact_preserve_messages': self.compact_preserve_messages,
+            'disable_claude_md_discovery': self.disable_claude_md_discovery,
+            'additional_working_directories': [
+                str(p) for p in self.additional_working_directories
+            ],
             'active_session_id': self.agent.active_session_id,
         }
 
@@ -361,6 +416,12 @@ class StateUpdate(BaseModel):
     response_schema: dict[str, Any] | None = None
     response_schema_name: str | None = None
     response_schema_strict: bool | None = None
+    # Context-management knobs.
+    auto_snip_threshold_tokens: int | None = None
+    auto_compact_threshold_tokens: int | None = None
+    compact_preserve_messages: int | None = None
+    disable_claude_md_discovery: bool | None = None
+    additional_working_directories: list[str] | None = None
 
 
 # ---------------------------------------------------------------------------

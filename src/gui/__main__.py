@@ -68,6 +68,17 @@ def main() -> None:
     )
     parser.add_argument('--response-schema-name', default='response')
     parser.add_argument('--response-schema-strict', action='store_true')
+    parser.add_argument('--auto-snip-threshold', type=int, default=None, dest='auto_snip_threshold_tokens')
+    parser.add_argument('--auto-compact-threshold', type=int, default=None, dest='auto_compact_threshold_tokens')
+    parser.add_argument('--compact-preserve-messages', type=int, default=4)
+    parser.add_argument('--disable-claude-md', action='store_true', dest='disable_claude_md_discovery')
+    parser.add_argument(
+        '--add-dir',
+        action='append',
+        default=[],
+        dest='additional_working_directories',
+        help='Additional working directory the agent may operate in (repeatable).',
+    )
     parser.add_argument(
         '--no-browser',
         action='store_true',
@@ -108,6 +119,13 @@ def main() -> None:
         response_schema=response_schema,
         response_schema_name=args.response_schema_name,
         response_schema_strict=args.response_schema_strict,
+        auto_snip_threshold_tokens=args.auto_snip_threshold_tokens,
+        auto_compact_threshold_tokens=args.auto_compact_threshold_tokens,
+        compact_preserve_messages=args.compact_preserve_messages,
+        disable_claude_md_discovery=args.disable_claude_md_discovery,
+        additional_working_directories=tuple(
+            Path(p).expanduser().resolve() for p in args.additional_working_directories
+        ),
     )
     app = create_app(state)
 

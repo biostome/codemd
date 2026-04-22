@@ -177,6 +177,57 @@ class GuiServerTests(unittest.TestCase):
             self.assertIsNone(cleared['custom_system_prompt'])
             self.assertIsNone(cleared['response_schema'])
 
+    def test_state_round_trips_context_knobs(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            client, _ = _build_client(Path(d))
+            extra = Path(d) / 'sibling'
+            extra.mkdir()
+
+            payload = client.get('/api/state').json()
+            self.assertIsNone(payload['auto_snip_threshold_tokens'])
+            self.assertEqual(payload['compact_preserve_messages'], 4)
+            self.assertFalse(payload['disable_claude_md_discovery'])
+            self.assertEqual(payload['additional_working_directories'], [])
+
+            updated = client.post(
+                '/api/state',
+                json={
+                    'auto_snip_threshold_tokens': 32000,
+                    'auto_compact_threshold_tokens': 50000,
+                    'compact_preserve_messages': 8,
+                    'disable_claude_md_discovery': True,
+                    'additional_working_directories': [str(extra)],
+                },
+            ).json()
+            self.assertEqual(updated['auto_snip_threshold_tokens'], 32000)
+            self.assertEqual(updated['auto_compact_threshold_tokens'], 50000)
+            self.assertEqual(updated['compact_preserve_messages'], 8)
+            self.assertTrue(updated['disable_claude_md_discovery'])
+            self.assertEqual(
+                updated['additional_working_directories'], [str(extra.resolve())]
+            )
+
+            cleared = client.post(
+                '/api/state',
+                json={
+                    'auto_snip_threshold_tokens': None,
+                    'additional_working_directories': [],
+                },
+            ).json()
+            self.assertIsNone(cleared['auto_snip_threshold_tokens'])
+            self.assertEqual(cleared['additional_working_directories'], [])
+            # Other knobs untouched.
+            self.assertEqual(cleared['auto_compact_threshold_tokens'], 50000)
+
+    def test_state_rejects_missing_additional_working_dir(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            client, _ = _build_client(Path(d))
+            r = client.post(
+                '/api/state',
+                json={'additional_working_directories': [str(Path(d) / 'nope')]},
+            )
+            self.assertEqual(r.status_code, 400)
+
     def test_state_update_rejects_invalid_schema_payload(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             client, _ = _build_client(Path(d))

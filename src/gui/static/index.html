@@ -62,6 +62,29 @@
             <input type="number" name="max_turns" min="1" step="1" />
           </label>
           <details class="settings-advanced">
+            <summary>Context management</summary>
+            <label>
+              <span>Auto-snip threshold (tokens, blank = off)</span>
+              <input type="number" name="auto_snip_threshold_tokens" min="1" step="1" />
+            </label>
+            <label>
+              <span>Auto-compact threshold (tokens, blank = off)</span>
+              <input type="number" name="auto_compact_threshold_tokens" min="1" step="1" />
+            </label>
+            <label>
+              <span>Messages preserved on compact</span>
+              <input type="number" name="compact_preserve_messages" min="0" step="1" />
+            </label>
+            <label class="toggle">
+              <input type="checkbox" name="disable_claude_md_discovery" />
+              <span>Disable CLAUDE.md discovery</span>
+            </label>
+            <label>
+              <span>Additional working dirs (one per line)</span>
+              <textarea name="additional_working_directories" rows="3" spellcheck="false"></textarea>
+            </label>
+          </details>
+          <details class="settings-advanced">
             <summary>System prompt &amp; structured output</summary>
             <label>
               <span>Custom system prompt</span>

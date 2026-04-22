@@ -61,6 +61,7 @@
 | 🆕 | **GUI Runtime Knobs** | Settings panel exposes temperature, per-turn timeout, streaming toggle, and max-turns — all round-tripped live through `/api/state` |
 | 🆕 | **GUI Budgets & Limits** | Advanced settings disclosure for every `BudgetConfig` field: cost ceiling, token budgets, tool/model call caps, delegated task cap, session turn cap — blank input clears the limit |
 | 🆕 | **GUI System Prompt & Schema** | Custom / append / override system prompts and a structured-output JSON schema editor (with strict toggle) live-editable in the settings panel |
+| 🆕 | **GUI Context Management** | Auto-snip / auto-compact thresholds, compact-preserve count, CLAUDE.md discovery toggle, and additional working directories — all editable from the settings panel and the new `--auto-snip-threshold` / `--auto-compact-threshold` / `--add-dir` flags |
 | 🆕 | **Daemon Commands** | Local `daemon start/ps/logs/attach/kill` wrapper over background agent sessions |
 | 🆕 | **Background Sessions** | Local `agent-bg`, `agent-ps`, `agent-logs`, `agent-attach`, and `agent-kill` flows |
 | 🆕 | **Testing Guide** | Comprehensive [TESTING_GUIDE.md](TESTING_GUIDE.md) with commands for every feature |
@@ -763,6 +764,11 @@ Your default browser opens to `http://127.0.0.1:8765` with a modern dark-themed 
 | `--response-schema-file <path>` | Load a structured-output schema from a JSON file |
 | `--response-schema-name <s>` | Name the schema (default `response`) |
 | `--response-schema-strict` | Reject responses that don't match the schema |
+| `--auto-snip-threshold <n>` | Token threshold above which old messages are auto-snipped |
+| `--auto-compact-threshold <n>` | Token threshold above which the conversation is auto-compacted |
+| `--compact-preserve-messages <n>` | Number of recent messages preserved during a compact (default `4`) |
+| `--disable-claude-md` | Skip discovery of `CLAUDE.md` files |
+| `--add-dir <path>` | Additional working directory the agent may operate in (repeatable) |
 | `--no-browser` | Don't auto-open a browser tab |
 
 Every budget flag above is also editable at runtime through the **Budgets & limits** disclosure in the settings panel — leave a field blank to clear the limit, type a number to set it.
