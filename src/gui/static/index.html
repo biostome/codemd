@@ -176,6 +176,7 @@
             <button class="view-tab" data-view="ask" type="button">Ask</button>
             <button class="view-tab" data-view="workflows" type="button">Workflows</button>
             <button class="view-tab" data-view="search" type="button">Search</button>
+            <button class="view-tab" data-view="triggers" type="button">Triggers</button>
           </div>
         </div>
         <div class="topbar-right">
@@ -208,6 +209,25 @@
           <span id="usage-meta"></span>
         </div>
       </footer>
+
+      <section id="triggers-view" class="tasks-view view" data-view-name="triggers" hidden>
+        <div class="tasks-toolbar">
+          <h2>Remote triggers</h2>
+          <button id="triggers-refresh" class="btn-ghost" type="button" title="Refresh">⟳</button>
+        </div>
+        <form id="triggers-create-form" class="tasks-create" style="flex-wrap:wrap; gap:8px;">
+          <input type="text" name="trigger_id" placeholder="trigger_id (required)" autocomplete="off" required />
+          <input type="text" name="name" placeholder="name (optional)" autocomplete="off" />
+          <input type="text" name="workflow" placeholder="workflow (optional)" autocomplete="off" />
+          <input type="text" name="schedule" placeholder="schedule (optional)" autocomplete="off" />
+          <input type="text" name="remote_target" placeholder="remote_target (optional)" autocomplete="off" />
+          <button type="submit" class="btn-primary">Create</button>
+        </form>
+        <h3 class="worktree-history-title">Triggers</h3>
+        <div id="triggers-grid" class="skills-grid"></div>
+        <h3 class="worktree-history-title">Run history</h3>
+        <div id="triggers-history" class="history-list"></div>
+      </section>
 
       <section id="search-view" class="tasks-view view" data-view-name="search" hidden>
         <div class="tasks-toolbar">

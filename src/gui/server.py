@@ -47,6 +47,7 @@ from .memory_routes import MemoryPathContext, create_memory_router
 from .plans_routes import create_plans_router
 from .plugins_routes import create_plugins_router
 from .remote_routes import create_remote_router
+from .remote_trigger_routes import create_remote_trigger_router
 from .search_routes import create_search_router
 from .tasks_routes import create_tasks_router
 from .workflow_routes import create_workflow_router
@@ -499,6 +500,12 @@ def create_app(state: AgentState) -> FastAPI:
     )
     app.include_router(
         create_search_router(
+            lambda: state.cwd,
+            lambda: state.additional_working_directories,
+        )
+    )
+    app.include_router(
+        create_remote_trigger_router(
             lambda: state.cwd,
             lambda: state.additional_working_directories,
         )

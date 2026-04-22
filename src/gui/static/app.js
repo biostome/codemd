@@ -121,6 +121,10 @@ const els = {
   searchForm: $("#search-form"),
   searchResults: $("#search-results"),
   searchRefresh: $("#search-refresh"),
+  triggersGrid: $("#triggers-grid"),
+  triggersHistory: $("#triggers-history"),
+  triggersRefresh: $("#triggers-refresh"),
+  triggersCreateForm: $("#triggers-create-form"),
 };
 
 const BgState = { current: null, status: null };
@@ -923,6 +927,105 @@ function setView(view) {
   if (view === "ask") loadAskUser();
   if (view === "workflows") loadWorkflows();
   if (view === "search") loadSearchView();
+  if (view === "triggers") loadRemoteTriggers();
+}
+
+// ---------------------------------------------------------------------------
+// Remote triggers view
+// ---------------------------------------------------------------------------
+async function loadRemoteTriggers() {
+  try {
+    renderRemoteTriggers(await apiGet("/api/remote-triggers"));
+  } catch (e) {
+    setStatus("error", `triggers: ${e.message}`);
+  }
+}
+
+function renderRemoteTriggers(payload) {
+  els.triggersGrid.innerHTML = "";
+  if (!payload.triggers.length) {
+    els.triggersGrid.innerHTML = `<div class="empty-state">No remote triggers yet — create one above.</div>`;
+  } else {
+    for (const t of payload.triggers) {
+      const card = document.createElement("div");
+      card.className = "skill-card";
+      card.innerHTML = `
+        <span class="skill-name">${escapeHtml(t.name || t.trigger_id)}</span>
+        <span class="skill-desc">${escapeHtml(t.description || "")}</span>
+        <div class="skill-meta">
+          <span class="skill-meta-pill">id: ${escapeHtml(t.trigger_id)}</span>
+          ${t.workflow ? `<span class="skill-meta-pill">workflow: ${escapeHtml(t.workflow)}</span>` : ""}
+          ${t.schedule ? `<span class="skill-meta-pill">schedule: ${escapeHtml(t.schedule)}</span>` : ""}
+          ${t.remote_target ? `<span class="skill-meta-pill">target: ${escapeHtml(t.remote_target)}</span>` : ""}
+          <span class="skill-meta-pill">source: ${escapeHtml(t.source)}</span>
+        </div>
+        <div class="skill-actions">
+          <button data-act="run">Run…</button>
+        </div>
+      `;
+      card.querySelector('[data-act="run"]').addEventListener("click", () => runRemoteTrigger(t.trigger_id));
+      els.triggersGrid.appendChild(card);
+    }
+  }
+
+  els.triggersHistory.innerHTML = "";
+  if (!payload.history.length) {
+    els.triggersHistory.innerHTML = `<div class="empty-state">No trigger runs yet.</div>`;
+  } else {
+    for (const r of [...payload.history].reverse()) {
+      const row = document.createElement("div");
+      row.className = "history-row";
+      row.innerHTML = `
+        <span class="history-when">${escapeHtml(r.created_at || "?")}</span>
+        <span class="history-tool">${escapeHtml(r.trigger_id)}</span>
+        <span class="history-detail">status: ${escapeHtml(r.status)}${r.workflow ? ` · workflow: ${escapeHtml(r.workflow)}` : ""}</span>
+        <span class="history-session">${escapeHtml(r.run_id.slice(0, 12))}</span>
+      `;
+      els.triggersHistory.appendChild(row);
+    }
+  }
+}
+
+async function createRemoteTrigger(ev) {
+  ev.preventDefault();
+  const fd = new FormData(els.triggersCreateForm);
+  const body = { trigger_id: (fd.get("trigger_id") || "").trim() };
+  if (!body.trigger_id) return;
+  for (const k of ["name", "workflow", "schedule", "remote_target"]) {
+    const v = (fd.get(k) || "").trim();
+    if (v) body[k] = v;
+  }
+  try {
+    const data = await apiPost("/api/remote-triggers", body);
+    renderRemoteTriggers(data);
+    els.triggersCreateForm.reset();
+    setStatus("ready", "Created");
+  } catch (e) {
+    setStatus("error", `triggers: ${e.message}`);
+  }
+}
+
+async function runRemoteTrigger(id) {
+  const raw = prompt(`Body JSON for trigger ${id}:`, "{}");
+  if (raw === null) return;
+  let body;
+  try {
+    body = JSON.parse(raw);
+  } catch (parseErr) {
+    setStatus("error", `triggers: invalid JSON (${parseErr.message})`);
+    return;
+  }
+  try {
+    setStatus("busy", `Running ${id}…`);
+    const data = await apiPost(
+      `/api/remote-triggers/${encodeURIComponent(id)}/run`,
+      { body }
+    );
+    renderRemoteTriggers(data.state);
+    setStatus("ready", "Recorded");
+  } catch (e) {
+    setStatus("error", `triggers: ${e.message}`);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -2159,6 +2262,8 @@ function bind() {
   if (els.workflowsRefresh) els.workflowsRefresh.addEventListener("click", loadWorkflows);
   if (els.searchRefresh) els.searchRefresh.addEventListener("click", loadSearchView);
   if (els.searchForm) els.searchForm.addEventListener("submit", runSearch);
+  if (els.triggersRefresh) els.triggersRefresh.addEventListener("click", loadRemoteTriggers);
+  if (els.triggersCreateForm) els.triggersCreateForm.addEventListener("submit", createRemoteTrigger);
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && !els.palette.classList.contains("hidden")) {
       closePalette();
