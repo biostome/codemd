@@ -44,6 +44,10 @@ def main() -> None:
     )
     parser.add_argument('--allow-shell', action='store_true')
     parser.add_argument('--allow-write', action='store_true')
+    parser.add_argument('--temperature', type=float, default=0.0)
+    parser.add_argument('--timeout-seconds', type=float, default=120.0)
+    parser.add_argument('--stream', action='store_true', dest='stream_model_responses')
+    parser.add_argument('--max-turns', type=int, default=12)
     parser.add_argument(
         '--no-browser',
         action='store_true',
@@ -60,6 +64,10 @@ def main() -> None:
         allow_shell=args.allow_shell,
         allow_write=args.allow_write,
         session_directory=Path(args.session_dir),
+        temperature=args.temperature,
+        timeout_seconds=args.timeout_seconds,
+        stream_model_responses=args.stream_model_responses,
+        max_turns=args.max_turns,
     )
     app = create_app(state)
 

@@ -247,11 +247,16 @@ function appendToolCall({ name, args, result, isError }) {
 // ---------------------------------------------------------------------------
 function applyServerState(state) {
   State.serverState = state;
-  els.settingsForm.model.value = state.model || "";
-  els.settingsForm.base_url.value = state.base_url || "";
-  els.settingsForm.cwd.value = state.cwd || "";
-  els.settingsForm.allow_shell.checked = !!state.allow_shell;
-  els.settingsForm.allow_write.checked = !!state.allow_write;
+  const f = els.settingsForm;
+  f.model.value = state.model || "";
+  f.base_url.value = state.base_url || "";
+  f.cwd.value = state.cwd || "";
+  f.allow_shell.checked = !!state.allow_shell;
+  f.allow_write.checked = !!state.allow_write;
+  if (f.stream_model_responses) f.stream_model_responses.checked = !!state.stream_model_responses;
+  if (f.temperature) f.temperature.value = state.temperature ?? 0;
+  if (f.timeout_seconds) f.timeout_seconds.value = state.timeout_seconds ?? 120;
+  if (f.max_turns) f.max_turns.value = state.max_turns ?? 12;
   els.cwdMeta.textContent = `cwd: ${state.cwd || "?"}`;
 }
 
@@ -267,13 +272,21 @@ async function loadServerState() {
 async function saveSettings(ev) {
   ev.preventDefault();
   const fd = new FormData(els.settingsForm);
+  const f = els.settingsForm;
   const payload = {
     model: fd.get("model") || "",
     base_url: fd.get("base_url") || "",
     cwd: fd.get("cwd") || "",
-    allow_shell: els.settingsForm.allow_shell.checked,
-    allow_write: els.settingsForm.allow_write.checked,
+    allow_shell: f.allow_shell.checked,
+    allow_write: f.allow_write.checked,
   };
+  if (f.stream_model_responses) payload.stream_model_responses = f.stream_model_responses.checked;
+  const temp = fd.get("temperature");
+  if (temp !== null && temp !== "") payload.temperature = Number(temp);
+  const to = fd.get("timeout_seconds");
+  if (to !== null && to !== "") payload.timeout_seconds = Number(to);
+  const mt = fd.get("max_turns");
+  if (mt !== null && mt !== "") payload.max_turns = Number(mt);
   try {
     setStatus("busy", "Saving settings…");
     const state = await apiPost("/api/state", payload);

@@ -45,6 +45,22 @@
             <input type="checkbox" name="allow_write" />
             <span>Allow write/edit</span>
           </label>
+          <label class="toggle">
+            <input type="checkbox" name="stream_model_responses" />
+            <span>Stream model responses</span>
+          </label>
+          <label>
+            <span>Temperature</span>
+            <input type="number" name="temperature" min="0" max="2" step="0.1" />
+          </label>
+          <label>
+            <span>Timeout (s)</span>
+            <input type="number" name="timeout_seconds" min="1" step="1" />
+          </label>
+          <label>
+            <span>Max turns</span>
+            <input type="number" name="max_turns" min="1" step="1" />
+          </label>
           <button type="submit" class="btn-secondary">Save</button>
         </form>
       </div>

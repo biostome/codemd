@@ -63,6 +63,48 @@ class GuiServerTests(unittest.TestCase):
             self.assertTrue(data['allow_shell'])
             self.assertEqual(data['model'], 'other-model')
 
+    def test_state_snapshot_exposes_runtime_knobs(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            client, _ = _build_client(Path(d))
+            payload = client.get('/api/state').json()
+            # Defaults match AgentState's defaults — keeps the form populatable.
+            self.assertEqual(payload['temperature'], 0.0)
+            self.assertEqual(payload['timeout_seconds'], 120.0)
+            self.assertFalse(payload['stream_model_responses'])
+            self.assertEqual(payload['max_turns'], 12)
+
+    def test_state_update_round_trips_runtime_knobs(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            client, _ = _build_client(Path(d))
+            updated = client.post(
+                '/api/state',
+                json={
+                    'temperature': 0.7,
+                    'timeout_seconds': 45.0,
+                    'stream_model_responses': True,
+                    'max_turns': 25,
+                },
+            )
+            self.assertEqual(updated.status_code, 200)
+            data = updated.json()
+            self.assertEqual(data['temperature'], 0.7)
+            self.assertEqual(data['timeout_seconds'], 45.0)
+            self.assertTrue(data['stream_model_responses'])
+            self.assertEqual(data['max_turns'], 25)
+
+    def test_state_update_rejects_bad_runtime_knobs(self) -> None:
+        with tempfile.TemporaryDirectory() as d:
+            client, _ = _build_client(Path(d))
+            # Negative temperature should be rejected with a 400.
+            r = client.post('/api/state', json={'temperature': -0.1})
+            self.assertEqual(r.status_code, 400)
+            # Zero timeout should be rejected too — would hang a turn.
+            r = client.post('/api/state', json={'timeout_seconds': 0})
+            self.assertEqual(r.status_code, 400)
+            # max_turns must be >= 1.
+            r = client.post('/api/state', json={'max_turns': 0})
+            self.assertEqual(r.status_code, 400)
+
     def test_state_update_rejects_missing_cwd(self) -> None:
         with tempfile.TemporaryDirectory() as d:
             client, _ = _build_client(Path(d))

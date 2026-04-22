@@ -53,6 +53,10 @@ class AgentState:
         allow_shell: bool,
         allow_write: bool,
         session_directory: Path,
+        temperature: float = 0.0,
+        timeout_seconds: float = 120.0,
+        stream_model_responses: bool = False,
+        max_turns: int = 12,
     ) -> None:
         self.cwd = cwd.resolve()
         self.session_directory = session_directory
@@ -63,6 +67,10 @@ class AgentState:
         self.api_key = api_key
         self.allow_shell = allow_shell
         self.allow_write = allow_write
+        self.temperature = temperature
+        self.timeout_seconds = timeout_seconds
+        self.stream_model_responses = stream_model_responses
+        self.max_turns = max_turns
         self._build_agent()
 
     def _build_agent(self) -> None:
@@ -74,11 +82,15 @@ class AgentState:
             cwd=self.cwd,
             permissions=permissions,
             session_directory=self.session_directory,
+            stream_model_responses=self.stream_model_responses,
+            max_turns=self.max_turns,
         )
         model_config = ModelConfig(
             model=self.model,
             base_url=self.base_url,
             api_key=self.api_key,
+            temperature=self.temperature,
+            timeout_seconds=self.timeout_seconds,
         )
         self._agent = LocalCodingAgent(
             model_config=model_config,
@@ -99,6 +111,10 @@ class AgentState:
         cwd: str | None = None,
         allow_shell: bool | None = None,
         allow_write: bool | None = None,
+        temperature: float | None = None,
+        timeout_seconds: float | None = None,
+        stream_model_responses: bool | None = None,
+        max_turns: int | None = None,
     ) -> None:
         with self._lock:
             if model is not None:
@@ -116,6 +132,20 @@ class AgentState:
                 self.allow_shell = allow_shell
             if allow_write is not None:
                 self.allow_write = allow_write
+            if temperature is not None:
+                if temperature < 0:
+                    raise ValueError('temperature must be >= 0')
+                self.temperature = temperature
+            if timeout_seconds is not None:
+                if timeout_seconds <= 0:
+                    raise ValueError('timeout_seconds must be > 0')
+                self.timeout_seconds = timeout_seconds
+            if stream_model_responses is not None:
+                self.stream_model_responses = stream_model_responses
+            if max_turns is not None:
+                if max_turns < 1:
+                    raise ValueError('max_turns must be >= 1')
+                self.max_turns = max_turns
             self._build_agent()
 
     def snapshot(self) -> dict[str, Any]:
@@ -126,6 +156,10 @@ class AgentState:
             'session_directory': str(self.session_directory),
             'allow_shell': self.allow_shell,
             'allow_write': self.allow_write,
+            'temperature': self.temperature,
+            'timeout_seconds': self.timeout_seconds,
+            'stream_model_responses': self.stream_model_responses,
+            'max_turns': self.max_turns,
             'active_session_id': self.agent.active_session_id,
         }
 
@@ -164,6 +198,10 @@ class StateUpdate(BaseModel):
     cwd: str | None = None
     allow_shell: bool | None = None
     allow_write: bool | None = None
+    temperature: float | None = None
+    timeout_seconds: float | None = None
+    stream_model_responses: bool | None = None
+    max_turns: int | None = None
 
 
 # ---------------------------------------------------------------------------

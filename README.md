@@ -58,6 +58,7 @@
 | 🆕 | **LSP Runtime** | Local LSP-style code intelligence for definitions, references, hover, symbols, call hierarchy, and diagnostics |
 | 🆕 | **Local Web GUI** | Browser-based chat UI via `python -m src.gui` — modern dark theme, slash command palette, session browser, settings panel |
 | 🆕 | **Pasted-Content Refs** | Pastes ≥500 chars into the GUI composer collapse to `[Pasted text #N +M lines]` chips and re-expand server-side before the agent runs |
+| 🆕 | **GUI Runtime Knobs** | Settings panel exposes temperature, per-turn timeout, streaming toggle, and max-turns — all round-tripped live through `/api/state` |
 | 🆕 | **Daemon Commands** | Local `daemon start/ps/logs/attach/kill` wrapper over background agent sessions |
 | 🆕 | **Background Sessions** | Local `agent-bg`, `agent-ps`, `agent-logs`, `agent-attach`, and `agent-kill` flows |
 | 🆕 | **Testing Guide** | Comprehensive [TESTING_GUIDE.md](TESTING_GUIDE.md) with commands for every feature |
@@ -741,6 +742,10 @@ Your default browser opens to `http://127.0.0.1:8765` with a modern dark-themed 
 | `--session-dir <path>` | Where saved sessions live |
 | `--allow-write` | Allow file write/edit tools |
 | `--allow-shell` | Allow shell execution |
+| `--temperature <f>` | Sampling temperature (default `0.0`) |
+| `--timeout-seconds <f>` | Per-turn model timeout in seconds (default `120`) |
+| `--stream` | Enable streaming model responses |
+| `--max-turns <n>` | Per-run turn limit (default `12`) |
 | `--no-browser` | Don't auto-open a browser tab |
 
 The GUI surfaces:
@@ -751,6 +756,7 @@ The GUI surfaces:
 - live settings panel (model, base URL, working dir, permissions)
 - usage / cost meta in the composer footer
 - pasted-content collapsing — see below
+- runtime knobs: temperature, timeout, streaming toggle, max turns
 
 ### Paste large content
 
