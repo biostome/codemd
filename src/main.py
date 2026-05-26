@@ -513,8 +513,11 @@ def _build_resumed_agent(args: argparse.Namespace) -> tuple[LocalCodingAgent, St
 
 
 def _print_agent_result(result, *, show_transcript: bool, streaming: bool = False) -> None:
-    if not streaming:
-        print(result.final_output)
+    if result.final_output:
+        from rich.console import Console
+        from rich.markdown import Markdown
+        console = Console()
+        console.print(Markdown(result.final_output))
     print('\n# Usage')
     print(f'total_tokens={result.usage.total_tokens}')
     print(f'input_tokens={result.usage.input_tokens}')
@@ -607,12 +610,6 @@ def _run_agent_chat_loop(
     confirm_code = _make_code_block_confirmer(
         output_func, input_func, auto_execute=auto_execute_code
     )
-    # Wire up real-time streaming output
-    if agent.runtime_config.stream_model_responses:
-        agent.runtime_config = replace(
-            agent.runtime_config,
-            stream_output_callback=output_func,
-        )
     active_session_id: str | None = resume_session_id
 
     output_func('# Agent Chat')
