@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
+from collections.abc import Callable
 from typing import Any
 
 
@@ -169,6 +170,8 @@ class AgentRuntimeConfig:
     scratchpad_root: Path = field(default_factory=lambda: (Path('.port_sessions') / 'scratchpad').resolve())
     no_tools: bool = False
     """Skip sending tool definitions to the model. Use with code-block detection."""
+    stream_output_callback: Callable[[str], None] | None = None
+    """Called with each content delta during streaming. Used for real-time token output."""
 
 
 @dataclass(frozen=True)

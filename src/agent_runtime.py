@@ -1300,6 +1300,9 @@ class LocalCodingAgent:
             events.append(event)
             if event.type == 'content_delta':
                 session.append_assistant_delta(assistant_index, event.delta)
+                cb = self.runtime_config.stream_output_callback
+                if cb is not None:
+                    cb(event.delta)
             elif event.type == 'tool_call_delta':
                 session.merge_assistant_tool_call_delta(
                     assistant_index,
