@@ -18,7 +18,7 @@ from .agent_registry import (
     render_agent_mutation,
     update_agent_definition,
 )
-from .agent_runtime import LocalCodingAgent
+from .agent_runtime import LocalCodingAgent, extract_code_blocks, _run_code_block, is_dangerous_command
 from .agent_types import (
     AgentPermissions,
     AgentRuntimeConfig,
@@ -111,8 +111,8 @@ def _build_runtime_config(args: argparse.Namespace) -> AgentRuntimeConfig:
             allow_destructive_shell_commands=args.unsafe,
         ),
         stream_model_responses=bool(getattr(args, 'stream', False)),
-        auto_snip_threshold_tokens=getattr(args, 'auto_snip_threshold', None),
-        auto_compact_threshold_tokens=getattr(args, 'auto_compact_threshold', None),
+        auto_snip_threshold_tokens=getattr(args, 'auto_snip_threshold', None) or 48000,
+        auto_compact_threshold_tokens=getattr(args, 'auto_compact_threshold', None) or 64000,
         compact_preserve_messages=max(0, int(getattr(args, 'compact_preserve_messages', 4))),
         additional_working_directories=tuple(Path(path).resolve() for path in args.add_dir),
         disable_claude_md_discovery=args.disable_claude_md,
@@ -128,6 +128,7 @@ def _build_runtime_config(args: argparse.Namespace) -> AgentRuntimeConfig:
             max_session_turns=getattr(args, 'max_session_turns', None),
         ),
         output_schema=_load_output_schema_config(args),
+        no_tools=getattr(args, 'no_tools', False),
         session_directory=(Path('.port_sessions') / 'agent').resolve(),
         scratchpad_root=(
             Path(getattr(args, 'scratchpad_root')).resolve()
@@ -535,6 +536,61 @@ def _print_agent_result(result, *, show_transcript: bool) -> None:
             print(message.get('content', ''))
 
 
+def _make_code_block_confirmer(
+    output_func: Callable[[str], None],
+    input_func: Callable[[str], str],
+    *,
+    auto_execute: bool = False,
+) -> Callable[[str, str], bool]:
+    """Return a callback that asks the user whether to execute a code block."""
+    def confirm(lang: str, command: str) -> bool:
+        dangerous = is_dangerous_command(command)
+        if auto_execute and not dangerous:
+            return True
+        output_func('')
+        label = '⚠️ DANGEROUS' if dangerous else 'Code Block'
+        output_func(f'─── {label} ───────────────────────────')
+        output_func(command)
+        output_func('───────────────────────────────────────────')
+        prompt_text = f'Execute this {lang} block? [y/N/q] '
+        if dangerous:
+            prompt_text = f'⚠️ Dangerous command! {prompt_text}'
+        try:
+            answer = input_func(prompt_text).strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            return False
+        if answer == 'q':
+            raise SystemExit(0)
+        return answer == 'y'
+    return confirm
+
+
+def _format_conversation_history(messages: tuple[dict, ...], max_msgs: int = 20) -> str:
+    """Format conversation history as text for context injection."""
+    lines: list[str] = []
+    count = 0
+    for msg in reversed(messages):
+        role = msg.get('role', '')
+        if role == 'system':
+            continue
+        if role == 'tool':
+            continue  # skip raw tool results, they are redundant
+        raw = (msg.get('content') or '').strip()
+        if not raw:
+            continue
+        # Clean up: remove markdown code fences for compactness
+        clean = raw.replace('```bash\n', '> ').replace('```\n', '').replace('```', '')
+        # Truncate
+        if len(clean) > 300:
+            clean = clean[:300] + '...'
+        label = 'User' if role == 'user' else 'Assistant'
+        lines.insert(0, f'{label}: {clean}')
+        count += 1
+        if count >= max_msgs:
+            break
+    return '\n'.join(lines)
+
+
 def _run_agent_chat_loop(
     agent: LocalCodingAgent,
     *,
@@ -544,14 +600,16 @@ def _run_agent_chat_loop(
     input_func: Callable[[str], str] = input,
     output_func: Callable[[str], None] = print,
     result_printer: Callable[..., None] = _print_agent_result,
+    auto_execute_code: bool = False,
 ) -> int:
-    active_session_id = resume_session_id
     first_prompt = initial_prompt
+    confirm_code = _make_code_block_confirmer(
+        output_func, input_func, auto_execute=auto_execute_code
+    )
+    active_session_id: str | None = resume_session_id
 
     output_func('# Agent Chat')
     output_func("Enter a prompt. Use '/exit' or '/quit' to stop.")
-    if active_session_id:
-        output_func(f'resuming_session_id={active_session_id}')
 
     while True:
         if first_prompt is not None:
@@ -574,16 +632,59 @@ def _run_agent_chat_loop(
             output_func('chat_ended=user_exit')
             return 0
 
+        # Inject context history + send as standard messages (same session)
         if active_session_id:
             stored_session = load_agent_session(
                 active_session_id,
                 directory=agent.runtime_config.session_directory,
             )
+            # Build context injection for reinforcement
+            context_lines = _format_conversation_history(stored_session.messages, max_msgs=20)
+            if context_lines:
+                prompt = (
+                    f'<CONTEXT_HISTORY>\n{context_lines}\n</CONTEXT_HISTORY>\n'
+                    f'{prompt}'
+                )
             result = agent.resume(prompt, stored_session)
         else:
             result = agent.run(prompt)
         result_printer(result, show_transcript=show_transcript)
         active_session_id = result.session_id
+
+        # Code block detection
+        blocks = extract_code_blocks(result.final_output or '')
+        if not blocks:
+            continue
+
+        for lang, command in blocks:
+            if not confirm_code(lang, command):
+                continue
+            run_result = _run_code_block(command, lang, agent.runtime_config)
+
+            # Print execution result to user
+            output_func('')
+            output_func(f'─── [{lang}] {command} ───')
+            output_func(run_result)
+            output_func('─────────────────────────────────')
+
+            # Feed result back to AI via resume (same session)
+            stored_session = load_agent_session(
+                active_session_id,
+                directory=agent.runtime_config.session_directory,
+            )
+            context_lines = _format_conversation_history(stored_session.messages, max_msgs=20)
+            follow_up = (
+                f'<CONTEXT_HISTORY>\n{context_lines}\n</CONTEXT_HISTORY>\n'
+                f'I executed this {lang} command:\n```\n{command}\n```\n'
+                f'Output:\n{run_result}\n\n'
+                f'Please continue based on this result.'
+            )
+            result = agent.resume(follow_up, stored_session)
+            ai_reply = result.final_output or ''
+            if ai_reply.strip():
+                output_func('')
+                output_func(ai_reply)
+            active_session_id = result.session_id
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -906,6 +1007,8 @@ def build_parser() -> argparse.ArgumentParser:
     chat_parser.add_argument('--resume-session-id')
     chat_parser.add_argument('--max-turns', type=int, default=12)
     chat_parser.add_argument('--show-transcript', action='store_true')
+    chat_parser.add_argument('--auto-execute-code', action='store_true', help='auto-execute code blocks without confirmation')
+    chat_parser.add_argument('--no-tools', action='store_true', help='skip sending tool definitions to the model (use together with --auto-execute-code for code-block-only workflow)')
     _add_agent_common_args(chat_parser, include_backend=True)
 
     resume_parser = subparsers.add_parser('agent-resume', help='resume a saved Python local-model agent session')
@@ -1554,6 +1657,7 @@ def main(argv: list[str] | None = None) -> int:
             initial_prompt=args.prompt,
             resume_session_id=args.resume_session_id,
             show_transcript=args.show_transcript,
+            auto_execute_code=getattr(args, 'auto_execute_code', False),
         )
     if args.command == 'agent-resume':
         agent, stored_session = _build_resumed_agent(args)

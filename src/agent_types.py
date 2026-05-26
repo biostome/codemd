@@ -167,6 +167,8 @@ class AgentRuntimeConfig:
     output_schema: OutputSchemaConfig | None = None
     session_directory: Path = field(default_factory=lambda: (Path('.port_sessions') / 'agent').resolve())
     scratchpad_root: Path = field(default_factory=lambda: (Path('.port_sessions') / 'scratchpad').resolve())
+    no_tools: bool = False
+    """Skip sending tool definitions to the model. Use with code-block detection."""
 
 
 @dataclass(frozen=True)

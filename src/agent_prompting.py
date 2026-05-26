@@ -91,26 +91,32 @@ def build_system_prompt_parts(
         get_system_section(),
         get_doing_tasks_section(),
         get_actions_section(),
-        get_using_your_tools_section(enabled_tool_names),
-        get_agent_guidance_section(enabled_tool_names, available_agents),
-        get_plugin_guidance_section(prompt_context),
-        get_mcp_guidance_section(prompt_context),
-        get_remote_guidance_section(prompt_context),
-        get_search_guidance_section(prompt_context),
-        get_account_guidance_section(prompt_context),
-        get_ask_user_guidance_section(prompt_context),
-        get_config_guidance_section(prompt_context),
-        get_lsp_guidance_section(prompt_context),
-        get_plan_guidance_section(prompt_context),
-        get_task_guidance_section(prompt_context),
-        get_team_guidance_section(prompt_context),
-        get_hook_policy_guidance_section(prompt_context),
+    ]
+    if not runtime_config.no_tools:
+        default_parts.append(get_using_your_tools_section(enabled_tool_names))
+    default_parts.append(get_code_block_guidance_section(runtime_config))
+    if not runtime_config.no_tools:
+        default_parts.extend([
+            get_agent_guidance_section(enabled_tool_names, available_agents),
+            get_plugin_guidance_section(prompt_context),
+            get_mcp_guidance_section(prompt_context),
+            get_remote_guidance_section(prompt_context),
+            get_search_guidance_section(prompt_context),
+            get_account_guidance_section(prompt_context),
+            get_ask_user_guidance_section(prompt_context),
+            get_config_guidance_section(prompt_context),
+            get_lsp_guidance_section(prompt_context),
+            get_plan_guidance_section(prompt_context),
+            get_task_guidance_section(prompt_context),
+            get_team_guidance_section(prompt_context),
+            get_hook_policy_guidance_section(prompt_context),
+        ])
+    default_parts.extend([
         get_tone_and_style_section(),
         get_output_efficiency_section(),
         SYSTEM_PROMPT_DYNAMIC_BOUNDARY,
-        get_session_specific_guidance_section(runtime_config, enabled_tool_names),
         compute_simple_env_info(prompt_context),
-    ]
+    ])
     default_parts = [part for part in default_parts if part]
 
     base_parts = [custom_system_prompt] if custom_system_prompt else default_parts
@@ -170,6 +176,27 @@ def get_actions_section() -> str:
 Carefully consider the reversibility and blast radius of actions. Local and reversible actions are usually fine. Hard-to-reverse, destructive, or externally visible actions deserve confirmation unless the user already authorized them clearly.
 
 When you encounter unexpected state, investigate before deleting or overwriting it. Measure twice, cut once."""
+
+
+def get_code_block_guidance_section(runtime_config: AgentRuntimeConfig) -> str:
+    """Guidance about using markdown code blocks for command execution."""
+    if not runtime_config.permissions.allow_shell_commands:
+        return ''
+    return (
+        '# Code block execution - MANDATORY RULE\n'
+        '\n'
+        'IMPORTANT: When you need to execute a shell command, you MUST output it '
+        'as a markdown code block with the bash language tag. '
+        'This is the ONLY format that will be executed. '
+        'Format: ```bash\ncommand here\n```\n'
+        '\n'
+        'DO NOT use > quotes or any other format for commands. '
+        'Commands in > quotes will NOT be executed.\n'
+        '\n'
+        '# Style\n'
+        'Keep responses short and direct. No emojis. No fluff. '
+        'Just state what you found or did in 1-2 sentences.'
+    )
 
 
 def get_using_your_tools_section(enabled_tool_names: set[str]) -> str:

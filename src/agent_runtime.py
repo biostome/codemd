@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 import json
+import re
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -83,6 +84,111 @@ from .builtin_agents import (
     GENERAL_PURPOSE_AGENT,
 )
 from .microcompact import microcompact_messages as _microcompact_messages
+
+_CODE_BLOCK_RE = re.compile(r'```(\w+)?\n(.*?)```', re.DOTALL)
+"""Match markdown code fences: ```lang\ncode```"""
+
+_DANGEROUS_COMMANDS = [
+    # Destructive file operations
+    r'\brm\s+(-[rfv]+\s+)*/',      # rm / (root)
+    r'\brm\s+(-[rfv]+\s+)*\s*/\s*$',  # rm -rf /
+    r'\brm\s+-rf\b',                # rm -rf (any path)
+    r'\brm\s+-fr\b',
+    r'\brm\s+-r[fv]+\s+~',         # rm -rf ~
+    r'\brm\s+-r[fv]+\s+/[a-z]',    # rm -rf /xxx
+    r'\brm\s+-r\b',                 # rm -r (recursive)
+    r'\brm\s+-rf\s+~',              # rm -rf ~
+    r'\brmdir\s+/',                 # rmdir /
+    r'\bmv\s+/\s+',                 # mv / (moving root)
+    # Format/destroy
+    r'\bd[dD]\s+',                  # dd
+    r'\bmkfs\.',                    # mkfs
+    r'\bformat\b',                  # format
+    r'\bmkswap\b',                  # mkswap
+    r'\bparted\b',                  # parted
+    r'\bfdisk\b',                   # fdisk
+    r'\bshred\b',                   # shred
+    # System commands
+    r'\breboot\b',                  # reboot
+    r'\bshutdown\b',               # shutdown
+    r'\bhalt\b',                   # halt
+    r'\bpoweroff\b',               # poweroff
+    r'\binit\s+0\b',               # init 0
+    r'\binit\s+6\b',               # init 6
+    # Privilege escalation
+    r'\bsudo\s+rm\b',              # sudo rm
+    r'\bsudo\s+dd\b',              # sudo dd
+    # Fork bomb / dangerous patterns
+    r':\(\)\{',                     # fork bomb
+    r'>\s*/dev/sd',                # write to block device
+    r'>\s*/dev/block',
+    r'\bchmod\s+-R\s+777\s+/',    # chmod -R 777 /
+]
+
+_DANGEROUS_RE = re.compile('|'.join(_DANGEROUS_COMMANDS))
+
+
+def is_dangerous_command(command: str) -> bool:
+    """Check if a command matches dangerous patterns."""
+    return bool(_DANGEROUS_RE.search(command))
+
+
+def _run_code_block(command: str, lang: str, config: AgentRuntimeConfig) -> str:
+    """Execute a code block and return formatted output."""
+    import subprocess  # noqa: PLC0415
+    import shlex  # noqa: PLC0415
+
+    if lang == 'python':
+        command = f'python3 -c {shlex.quote(command)}'
+
+    try:
+        completed = subprocess.run(
+            command,
+            shell=True,
+            executable='/bin/bash',
+            cwd=config.cwd,
+            capture_output=True,
+            text=True,
+            timeout=config.command_timeout_seconds,
+        )
+    except subprocess.TimeoutExpired:
+        return (
+            f'[exit_code=-1]\n'
+            f'[command timed out after {config.command_timeout_seconds}s]\n'
+        )
+    except OSError as exc:
+        return f'[exit_code=-1]\n[execution error]\n{exc}'
+
+    stdout = completed.stdout.rstrip()
+    stderr = completed.stderr.rstrip()
+    max_out = config.max_output_chars
+    if len(stdout) > max_out:
+        stdout = stdout[:max_out] + '\n...[truncated]...'
+    if len(stderr) > max_out:
+        stderr = stderr[:max_out] + '\n...[truncated]...'
+    parts = [f'[exit_code={completed.returncode}]']
+    if stdout:
+        parts.append(f'[stdout]\n{stdout}')
+    if stderr:
+        parts.append(f'[stderr]\n{stderr}')
+    return '\n'.join(parts)
+
+
+def extract_code_blocks(text: str) -> list[tuple[str, str]]:
+    """Extract (language, code) pairs from markdown code fences.
+
+    Only returns blocks with shell-like or python language tags,
+    or blocks with no language tag (treated as shell).
+    """
+    blocks: list[tuple[str, str]] = []
+    for match in _CODE_BLOCK_RE.finditer(text):
+        lang = (match.group(1) or '').strip().lower()
+        code = match.group(2).strip()
+        if not code:
+            continue
+        if lang in ('bash', 'sh', 'shell', 'zsh', 'python', ''):
+            blocks.append((lang, code))
+    return blocks
 
 
 @dataclass(frozen=True)
@@ -460,7 +566,7 @@ class LocalCodingAgent:
         session.append_user(effective_prompt)
         self.last_session = session
         self.active_session_id = session_id
-        tool_specs = [tool.to_openai_tool() for tool in self.tool_registry.values()]
+        tool_specs = [] if self.runtime_config.no_tools else [tool.to_openai_tool() for tool in self.tool_registry.values()]
         starting_usage = UsageStats()
         starting_cost_usd = 0.0
         starting_tool_calls = 0
@@ -781,6 +887,7 @@ class LocalCodingAgent:
                     )
                     last_content = ''.join(assistant_response_segments)
                     continue
+
                 result = AgentRunResult(
                     final_output=''.join(assistant_response_segments),
                     turns=turn_index,
