@@ -569,8 +569,8 @@ def _make_code_block_confirmer(
     return confirm
 
 
-def _format_conversation_history(messages: tuple[dict, ...], max_msgs: int = 20) -> str:
-    """Format conversation history as text for context injection."""
+def _format_recent_history(messages: tuple[dict, ...], max_exchanges: int = 5) -> str:
+    """Format recent exchanges as text for context injection."""
     lines: list[str] = []
     count = 0
     for msg in reversed(messages):
@@ -578,19 +578,17 @@ def _format_conversation_history(messages: tuple[dict, ...], max_msgs: int = 20)
         if role == 'system':
             continue
         if role == 'tool':
-            continue  # skip raw tool results, they are redundant
+            continue
         raw = (msg.get('content') or '').strip()
         if not raw:
             continue
-        # Clean up: remove markdown code fences for compactness
         clean = raw.replace('```bash\n', '> ').replace('```\n', '').replace('```', '')
-        # Truncate
-        if len(clean) > 300:
-            clean = clean[:300] + '...'
+        if len(clean) > 500:
+            clean = clean[:500] + '...'
         label = 'User' if role == 'user' else 'Assistant'
         lines.insert(0, f'{label}: {clean}')
         count += 1
-        if count >= max_msgs:
+        if count >= max_exchanges * 2:
             break
     return '\n'.join(lines)
 
@@ -636,14 +634,14 @@ def _run_agent_chat_loop(
             output_func('chat_ended=user_exit')
             return 0
 
-        # Inject context history + send as standard messages (same session)
+        # Send as standard messages (same session)
         if active_session_id:
             stored_session = load_agent_session(
                 active_session_id,
                 directory=agent.runtime_config.session_directory,
             )
-            # Build context injection for reinforcement
-            context_lines = _format_conversation_history(stored_session.messages, max_msgs=20)
+            # Inject full conversation as text context (model ignores session history)
+            context_lines = _format_recent_history(stored_session.messages, max_exchanges=999)
             if context_lines:
                 prompt = (
                     f'<CONTEXT_HISTORY>\n{context_lines}\n</CONTEXT_HISTORY>\n'
@@ -676,7 +674,7 @@ def _run_agent_chat_loop(
                 active_session_id,
                 directory=agent.runtime_config.session_directory,
             )
-            context_lines = _format_conversation_history(stored_session.messages, max_msgs=20)
+            context_lines = _format_recent_history(stored_session.messages, max_exchanges=999)
             follow_up = (
                 f'<CONTEXT_HISTORY>\n{context_lines}\n</CONTEXT_HISTORY>\n'
                 f'I executed this {lang} command:\n```\n{command}\n```\n'
