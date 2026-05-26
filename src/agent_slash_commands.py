@@ -2236,7 +2236,7 @@ def _read_package_version() -> str:
     try:
         from importlib.metadata import PackageNotFoundError, version
 
-        return version('claw-code-agent')
+        return version('codemd')
     except Exception:
         return 'unknown'
 
@@ -2254,7 +2254,7 @@ def _handle_version(
     impl = sys.implementation.name
     return _local_result(
         input_text,
-        f'claw-code-agent {pkg_version} (Python {py_version}, {impl}).',
+        f'codemd {pkg_version} (Python {py_version}, {impl}).',
     )
 
 

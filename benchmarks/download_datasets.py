@@ -525,7 +525,7 @@ def _write_manifest(data_dir: Path, results: list[DownloadResult]) -> Path:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Download benchmark datasets for claw-code-agent.")
+    parser = argparse.ArgumentParser(description="Download benchmark datasets for codemd.")
     parser.add_argument("--suite", action="append", default=[], help="Suite to prepare. Can be repeated.")
     parser.add_argument("--all", action="store_true", help="Prepare all known suites.")
     parser.add_argument("--list", action="store_true", help="List known suites.")

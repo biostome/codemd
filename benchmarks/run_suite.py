@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Standard evaluation benchmark runner for claw-code-agent.
+Standard evaluation benchmark runner for codemd.
 
 Runs the agent against well-known evaluation suites and reports scores.
 
@@ -156,7 +156,7 @@ def print_combined_report(reports: list[SuiteReport]) -> None:
 
 def save_combined_report(reports: list[SuiteReport], path: str) -> None:
     data = {
-        "benchmark_run": "claw-code-agent-evaluation",
+        "benchmark_run": "codemd-evaluation",
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
         "suites": [r.to_dict() for r in reports],
         "summary": {
@@ -179,7 +179,7 @@ def save_combined_report(reports: list[SuiteReport], path: str) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Run standard evaluation benchmarks against claw-code-agent",
+        description="Run standard evaluation benchmarks against codemd",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             "Examples:\n"

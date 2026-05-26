@@ -54,7 +54,7 @@ def _read_package_version() -> str:
     try:
         from importlib.metadata import version
 
-        return version('claw-code-agent')
+        return version('codemd')
     except Exception:
         return '0.0.0'
 

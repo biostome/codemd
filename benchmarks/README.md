@@ -1,4 +1,4 @@
-# Benchmarks — claw-code-agent
+# Benchmarks — codemd
 
 This directory contains two benchmark systems:
 
@@ -304,7 +304,7 @@ Results are saved as JSON with this structure:
 
 ```json
 {
-  "benchmark_run": "claw-code-agent-evaluation",
+  "benchmark_run": "codemd-evaluation",
   "timestamp": "2025-01-15T10:30:00",
   "suites": [
     {

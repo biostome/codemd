@@ -10,7 +10,7 @@ from harbor.models.agent.context import AgentContext
 
 class ClawCodeInstalledAgent(BaseInstalledAgent):
     """
-    Harbor installed-agent adapter for claw-code-agent.
+    Harbor installed-agent adapter for codemd.
 
     This installs the published GitHub repo inside the Harbor environment and
     runs the CLI in one-shot mode against the task working directory.
@@ -33,10 +33,10 @@ class ClawCodeInstalledAgent(BaseInstalledAgent):
 
     @staticmethod
     def name() -> str:
-        return "claw-code-agent"
+        return "codemd"
 
     def get_version_command(self) -> str | None:
-        return "claw-code-agent --help >/dev/null 2>&1 && echo installed"
+        return "codemd --help >/dev/null 2>&1 && echo installed"
 
     async def install(self, environment: BaseEnvironment) -> None:
         await self.exec_as_root(
@@ -54,16 +54,16 @@ class ClawCodeInstalledAgent(BaseInstalledAgent):
         )
         version_spec = f"@{self._version}" if self._version else ""
         repo_spec = (
-            f"git+https://github.com/HarnessLab/claw-code-agent.git{version_spec}"
+            f"git+https://github.com/HarnessLab/codemd.git{version_spec}"
             if version_spec
-            else "git+https://github.com/HarnessLab/claw-code-agent.git"
+            else "git+https://github.com/HarnessLab/codemd.git"
         )
         await self.exec_as_agent(
             environment,
             command=(
                 "set -euo pipefail; "
                 f"python3 -m pip install --upgrade pip && python3 -m pip install {shlex.quote(repo_spec)} && "
-                "claw-code-agent --help >/dev/null"
+                "codemd --help >/dev/null"
             ),
         )
 
@@ -88,8 +88,8 @@ class ClawCodeInstalledAgent(BaseInstalledAgent):
 
         # Harbor executes in the task working directory; keep cwd anchored there.
         command = (
-            f"claw-code-agent agent {escaped_instruction} "
+            f"codemd agent {escaped_instruction} "
             f"--cwd $(pwd) {extra_flags}"
-            "2>&1 | stdbuf -oL tee /logs/agent/claw-code-agent.txt"
+            "2>&1 | stdbuf -oL tee /logs/agent/codemd.txt"
         )
         await self.exec_as_agent(environment, command=command, env=env)

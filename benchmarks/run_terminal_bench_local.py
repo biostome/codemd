@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Run Terminal-Bench tasks locally with Apptainer and claw-code-agent.
+Run Terminal-Bench tasks locally with Apptainer and codemd.
 
 This runner is designed for cluster setups where Docker is unavailable but
 Apptainer is available and the model server runs on the same node.
@@ -455,7 +455,7 @@ def save_results(path: Path, results: list[LocalTrialResult]) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Run Terminal-Bench tasks locally with Apptainer and claw-code-agent.")
+    parser = argparse.ArgumentParser(description="Run Terminal-Bench tasks locally with Apptainer and codemd.")
     parser.add_argument("--tasks-dir", type=Path, default=DEFAULT_TASKS_DIR, help="Directory containing downloaded Harbor task packages.")
     parser.add_argument("--include-task-name", "-i", action="append", default=[], help="Include only task names matching this glob pattern.")
     parser.add_argument("--exclude-task-name", "-x", action="append", default=[], help="Exclude task names matching this glob pattern.")

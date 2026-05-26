@@ -1637,7 +1637,7 @@ def _web_fetch(arguments: dict[str, Any], context: ToolExecutionContext) -> str:
         raise ToolExecutionError('url must use http or https scheme')
     request = urllib.request.Request(
         raw_url,
-        headers={'User-Agent': 'claw-code-agent/1.0'},
+        headers={'User-Agent': 'codemd/1.0'},
     )
     try:
         with urllib.request.urlopen(request, timeout=context.command_timeout_seconds) as response:

@@ -1,5 +1,5 @@
 """
-Benchmark task definitions for claw-code-agent.
+Benchmark task definitions for codemd.
 
 Each task has:
   - id:          unique identifier

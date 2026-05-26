@@ -128,7 +128,7 @@ docker_image = "example/other:latest"
 
             self.assertIn(" -m src.main agent ", cmd)
             self.assertIn("instruction=$(cat", cmd)
-            self.assertNotIn("claw-code-agent agent", cmd)
+            self.assertNotIn("codemd agent", cmd)
 
     def test_build_verifier_command_fakeroot_adds_flags(self) -> None:
         with tempfile.TemporaryDirectory() as tmp_dir:

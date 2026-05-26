@@ -1,1 +1,1 @@
-"""Standard evaluation benchmark suites for claw-code-agent."""
+"""Standard evaluation benchmark suites for codemd."""

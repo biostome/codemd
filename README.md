@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white" alt="Python 3.10+"></a>
-  <a href="https://github.com/HarnessLab/claw-code-agent"><img src="https://img.shields.io/badge/repo-HarnessLab%2Fclaw--code--agent-181717?logo=github" alt="GitHub"></a>
+  <a href="https://github.com/HarnessLab/codemd"><img src="https://img.shields.io/badge/repo-HarnessLab%2Fclaw--code--agent-181717?logo=github" alt="GitHub"></a>
   <a href="https://docs.vllm.ai/"><img src="https://img.shields.io/badge/backend-vLLM-FF6F00?logo=lightning&logoColor=white" alt="vLLM"></a>
   <a href="https://huggingface.co/Qwen/Qwen3-Coder-30B-A3B-Instruct"><img src="https://img.shields.io/badge/model-Qwen3--Coder-FFD21E?logo=huggingface&logoColor=black" alt="Qwen3-Coder"></a>
   <img src="https://img.shields.io/badge/dependencies-zero-brightgreen" alt="Zero Dependencies">
@@ -90,7 +90,7 @@
 
 This repository reimplements the [Claude Code](https://docs.anthropic.com/en/docs/claude-code) npm agent architecture **entirely in Python**, designed to run with **local open-source models** via an OpenAI-compatible API server.
 
-Built on the public porting workspace from [instructkr/claw-code](https://github.com/instructkr/claw-code), the active development lives at [HarnessLab/claw-code-agent](https://github.com/HarnessLab/claw-code-agent).
+Built on the public porting workspace from [instructkr/claw-code](https://github.com/instructkr/claw-code), the active development lives at [HarnessLab/codemd](https://github.com/HarnessLab/codemd).
 
 > **Goal:** Not to ship the original npm source, but to reimplement the full agent flow in Python — prompt assembly, context building, slash commands, tool calling, session persistence, and local model execution.
 >
@@ -324,7 +324,7 @@ curl http://127.0.0.1:8000/v1/models
 
 ### Optional: Use Ollama Instead of vLLM
 
-`claw-code-agent` can also work with Ollama because the runtime targets an OpenAI-compatible API. Use a model that supports tool calling well.
+`codemd` can also work with Ollama because the runtime targets an OpenAI-compatible API. Use a model that supports tool calling well.
 
 Example:
 
@@ -351,7 +351,7 @@ Notes:
 
 ### Optional: Use LiteLLM Proxy
 
-`claw-code-agent` can also work through LiteLLM Proxy because the runtime targets an OpenAI-compatible chat completions API. The routed model still needs to support tool calling for full agent behavior.
+`codemd` can also work through LiteLLM Proxy because the runtime targets an OpenAI-compatible chat completions API. The routed model still needs to support tool calling for full agent behavior.
 
 Quick start example:
 
@@ -378,7 +378,7 @@ Notes:
 
 ### Optional: Use OpenRouter
 
-`claw-code-agent` can also work with [OpenRouter](https://openrouter.ai/), a cloud API gateway that provides access to models from OpenAI, Anthropic, Google, Meta, and others through a single OpenAI-compatible endpoint. No local model server required.
+`codemd` can also work with [OpenRouter](https://openrouter.ai/), a cloud API gateway that provides access to models from OpenAI, Anthropic, Google, Meta, and others through a single OpenAI-compatible endpoint. No local model server required.
 
 Configure:
 

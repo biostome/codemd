@@ -7,7 +7,7 @@ It is organized by runtime surface, not by source file. Every implemented featur
 All commands below assume you are inside the repository root:
 
 ```bash
-cd /path/to/claw-code-agent
+cd /path/to/codemd
 ```
 
 ## 1. Backend Setup
@@ -122,7 +122,7 @@ python3 -m src.main daemon --help
 ### 2.3 Packaged entrypoint
 
 ```bash
-claw-code-agent agent "/help"
+codemd agent "/help"
 ```
 
 ## 3. Mirrored Workspace And Inventory Commands

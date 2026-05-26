@@ -36,7 +36,7 @@ class VersionCommandTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             agent = _make_agent(tmp)
             out = agent.run('/version').final_output
-        self.assertIn('claw-code-agent', out)
+        self.assertIn('codemd', out)
         self.assertIn('Python', out)
 
 

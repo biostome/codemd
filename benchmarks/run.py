@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Local benchmark runner for claw-code-agent.
+Local benchmark runner for codemd.
 
 Runs the REAL agent binary against a suite of coding tasks and scores
 pass/fail automatically. No Docker required.
@@ -237,7 +237,7 @@ def print_results(results: list[TaskResult]) -> None:
 def save_results(results: list[TaskResult], output_path: str) -> None:
     """Save results to JSON."""
     data = {
-        "benchmark": "claw-code-agent-local",
+        "benchmark": "codemd-local",
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
         "model": os.environ.get("OPENAI_MODEL", "unknown"),
         "total": len(results),
