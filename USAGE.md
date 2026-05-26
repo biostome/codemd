@@ -20,6 +20,27 @@ Then just chat naturally. When the AI outputs a ` ```bash ` code block, it gets 
 
 ---
 
+## Backend Setup
+
+codemd connects to any OpenAI-compatible API. The setup:
+
+```
+AI model (Qwen/Kimi/GLM) → chat2api proxy → codemd
+```
+
+chat2api translates OpenAI-format requests into each model's native API. You point codemd at chat2api's endpoint:
+
+```bash
+--base-url http://localhost:1234/v1
+--api-key <chat2api-provided-key>
+--model <any-model-available-on-chat2api>
+```
+
+### Supported via chat2api
+Any model accessible through chat2api works. The code-block-only mode (`--no-tools`) doesn't require function calling support, so even models with weak tool-use ability can execute commands.
+
+---
+
 ## Key Features
 
 ### Code Block Detection
