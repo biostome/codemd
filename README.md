@@ -2,15 +2,15 @@
   <img src="images/logo.png" alt="Claw Code Agent logo" width="420" />
 </p>
 
-<h1 align="center">Claw Code Agent</h1>
+<h1 align="center">codemd</h1>
 
 <p align="center">
-  <em>A Python reimplementation of the Claude Code agent architecture — local models, full control, zero dependencies.</em>
+  <em>Code from markdown — detects ```bash/```python in AI chat responses, executes them, and feeds results back to the model.</em>
 </p>
 
 <p align="center">
   <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white" alt="Python 3.10+"></a>
-  <a href="https://github.com/HarnessLab/codemd"><img src="https://img.shields.io/badge/repo-HarnessLab%2Fclaw--code--agent-181717?logo=github" alt="GitHub"></a>
+  <a href="https://github.com/HarnessLab/codemd"><img src="https://img.shields.io/badge/repo-HarnessLab%2Fcodemd-181717?logo=github" alt="GitHub"></a>
   <a href="https://docs.vllm.ai/"><img src="https://img.shields.io/badge/backend-vLLM-FF6F00?logo=lightning&logoColor=white" alt="vLLM"></a>
   <a href="https://huggingface.co/Qwen/Qwen3-Coder-30B-A3B-Instruct"><img src="https://img.shields.io/badge/model-Qwen3--Coder-FFD21E?logo=huggingface&logoColor=black" alt="Qwen3-Coder"></a>
   <img src="https://img.shields.io/badge/dependencies-zero-brightgreen" alt="Zero Dependencies">
@@ -22,12 +22,15 @@
 
 ## 📢 What's New
 
-> **April 2026 — Major Update**
+> **May 2026 — Code Block Execution**
 
 | | Feature | Details |
 |---|---------|---------|
-| 🆕 | **Interactive Chat Mode** | New `agent-chat` command — multi-turn REPL with `/exit` to quit |
-| 🆕 | **Streaming Output** | Token-by-token streaming with `--stream` flag |
+| 🆕 | **Code Block Detection** | Detects ```bash/```python in AI responses, executes, feeds back |
+| 🆕 | **--no-tools Mode** | Skip function calling definitions, rely purely on code blocks |
+| 🆕 | **Dangerous Command Protection** | `rm -rf`, `dd`, etc. always require confirmation |
+| 🆕 | **Multi-turn Context** | Full conversation history injected into each prompt |
+| 🆕 | **Context Compression** | Auto-snip/compact at 48K/64K tokens to stay within window |
 | 🆕 | **Plugin Runtime** | Full manifest-based plugin system — hooks, tool aliases, virtual tools, tool blocking |
 | 🆕 | **Nested Agent Delegation** | Delegate subtasks to child agents with dependency-aware topological batching |
 | 🆕 | **Agent Manager** | Lineage tracking, group membership, batch summaries for nested agents |
