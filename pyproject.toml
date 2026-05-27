@@ -40,8 +40,8 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/HarnessLab/codemd"
-Repository = "https://github.com/HarnessLab/codemd"
+Homepage = "https://github.com/biostome/codemd"
+Repository = "https://github.com/biostome/codemd"
 
 [project.scripts]
 codemd = "src.main:main"

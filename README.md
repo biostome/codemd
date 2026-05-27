@@ -10,10 +10,10 @@
 
 <p align="center">
   <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white" alt="Python 3.10+"></a>
-  <a href="https://github.com/HarnessLab/codemd"><img src="https://img.shields.io/badge/repo-HarnessLab%2Fcodemd-181717?logo=github" alt="GitHub"></a>
+  <a href="https://github.com/biostome/codemd"><img src="https://img.shields.io/badge/repo-biostome%2Fcodemd-181717?logo=github" alt="GitHub"></a>
   <a href="https://docs.vllm.ai/"><img src="https://img.shields.io/badge/backend-vLLM-FF6F00?logo=lightning&logoColor=white" alt="vLLM"></a>
   <a href="https://huggingface.co/Qwen/Qwen3-Coder-30B-A3B-Instruct"><img src="https://img.shields.io/badge/model-Qwen3--Coder-FFD21E?logo=huggingface&logoColor=black" alt="Qwen3-Coder"></a>
-  <img src="https://img.shields.io/badge/dependencies-zero-brightgreen" alt="Zero Dependencies">
+  <img src="https://img.shields.io/badge/dependencies-minimal-brightgreen" alt="Minimal Dependencies">
   <img src="https://img.shields.io/badge/status-alpha-orange" alt="Alpha">
   <img src="https://img.shields.io/badge/license-open--source-green" alt="License">
 </p>
@@ -93,11 +93,13 @@
 
 This repository reimplements the [Claude Code](https://docs.anthropic.com/en/docs/claude-code) npm agent architecture **entirely in Python**, designed to run with **local open-source models** via an OpenAI-compatible API server.
 
-Built on the public porting workspace from [instructkr/claw-code](https://github.com/instructkr/claw-code), the active development lives at [HarnessLab/codemd](https://github.com/HarnessLab/codemd).
+> **Note:** The core agent runtime uses only the Python standard library (zero dependencies). The GUI (`python -m src.gui`) and CLI extras use [FastAPI](https://fastapi.tiangolo.com/), [Uvicorn](https://www.uvicorn.org/), [Pydantic](https://docs.pydantic.dev/), and [Rich](https://rich.readthedocs.io/).
+
+Built on the public porting workspace from [instructkr/claw-code](https://github.com/instructkr/claw-code).
 
 > **Goal:** Not to ship the original npm source, but to reimplement the full agent flow in Python — prompt assembly, context building, slash commands, tool calling, session persistence, and local model execution.
 >
-> **Zero external dependencies** — just Python's standard library.
+> **Core agent runtime: zero external dependencies** — just Python's standard library. GUI and CLI extras require FastAPI, Uvicorn, Pydantic, and Rich (installed automatically via `pip install -e .`).
 
 <p align="center">
   <img src="images/demo_2.gif" alt="Claw Code Agent demo" width="900" />
@@ -141,7 +143,7 @@ Built on the public porting workspace from [instructkr/claw-code](https://github
 | 🔐 **Permission System** | Granular control: `--allow-write`, `--allow-shell`, `--unsafe` |
 | 🏗️ **OpenAI-Compatible** | Works with vLLM, Ollama, LiteLLM Proxy, OpenRouter — any OpenAI-compatible API |
 | 🐉 **Qwen3-Coder** | First-class support for `Qwen3-Coder-30B-A3B-Instruct` via vLLM |
-| 📦 **Zero Dependencies** | Pure Python standard library — nothing to install |
+| 📦 **Minimal Dependencies** | Core runtime is pure Python stdlib — GUI extras need FastAPI/Uvicorn/Pydantic/Rich |
 
 ---
 
@@ -296,7 +298,7 @@ claw-code/
 | Requirement | Details |
 |-------------|---------|
 | 🐍 Python | `3.10` or higher |
-| 📚 Dependencies | **None** — pure Python standard library |
+| 📚 Dependencies | **Minimal** — core is pure Python stdlib; GUI/CLI extras need FastAPI + Uvicorn + Pydantic + Rich |
 | 🖥️ Model Server | `vLLM`, `Ollama`, `LiteLLM Proxy`, or `OpenRouter`, with tool calling support |
 | 🧠 Model | [`Qwen/Qwen3-Coder-30B-A3B-Instruct`](https://huggingface.co/Qwen/Qwen3-Coder-30B-A3B-Instruct) (recommended) |
 
@@ -814,7 +816,7 @@ Paste anything ≥500 characters into the composer (a logfile, a stack trace, an
 - The chip's `✕` button drops both the content stash and any inline ref so it can't accidentally come along.
 - The stash clears after every successful send and when you click `+ New chat`.
 
-> **Note:** The GUI uses [FastAPI](https://fastapi.tiangolo.com/) and [Uvicorn](https://www.uvicorn.org/) under the hood. These get installed automatically if you install the package via `pip install -e .`. The core Python agent runtime itself remains dependency-free.
+> **Note:** The GUI uses [FastAPI](https://fastapi.tiangolo.com/), [Uvicorn](https://www.uvicorn.org/), [Pydantic](https://docs.pydantic.dev/), and [Rich](https://rich.readthedocs.io/) under the hood. These get installed automatically when you install the package via `pip install -e .`. The core Python agent runtime itself remains dependency-free.
 
 ---
 
@@ -905,5 +907,5 @@ It covers: core runtime, CLI modes, prompt assembly, context/memory, slash comma
 ---
 
 <p align="center">
-  <sub>Built with 🐍 Python · Powered by 🐉 HarnessLab Team.</sub>
+  <sub>Built with 🐍 Python.</sub>
 </p>
