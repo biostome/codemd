@@ -371,7 +371,7 @@ def get_slash_command_specs() -> tuple[SlashCommandSpec, ...]:
         ),
         SlashCommandSpec(
             names=('doctor',),
-            description='Diagnose and verify the claw-code installation and settings.',
+            description='Diagnose and verify the codemd installation and settings.',
             handler=_handle_doctor,
         ),
         SlashCommandSpec(
@@ -1251,7 +1251,7 @@ def _handle_copy(agent: 'LocalCodingAgent', args: str, input_text: str) -> Slash
 
     # Write to temp file
     from pathlib import Path as _Path
-    tmp_dir = _Path(_tempfile.gettempdir()) / 'claw-code'
+    tmp_dir = _Path(_tempfile.gettempdir()) / 'codemd'
     tmp_dir.mkdir(parents=True, exist_ok=True)
     out_path = tmp_dir / 'response.md'
     out_path.write_text(content, encoding='utf-8')
@@ -1431,7 +1431,7 @@ def _handle_effort(agent: 'LocalCodingAgent', args: str, input_text: str) -> Sla
 
 
 def _handle_doctor(agent: 'LocalCodingAgent', _args: str, input_text: str) -> SlashCommandResult:
-    """Diagnose and verify the claw-code installation."""
+    """Diagnose and verify the codemd installation."""
     import os
     import shutil
     import sys

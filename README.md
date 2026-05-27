@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="images/logo.png" alt="Claw Code Agent logo" width="420" />
+  <img src="images/logo.png" alt="codemd logo" width="420" />
 </p>
 
 <h1 align="center">codemd</h1>
@@ -102,7 +102,7 @@ Built on the public porting workspace from [instructkr/claw-code](https://github
 > **Core agent runtime: zero external dependencies** — just Python's standard library. GUI and CLI extras require FastAPI, Uvicorn, Pydantic, and Rich (installed automatically via `pip install -e .`).
 
 <p align="center">
-  <img src="images/demo_2.gif" alt="Claw Code Agent demo" width="900" />
+  <img src="images/demo_2.gif" alt="codemd demo" width="900" />
 </p>
 
 ---
@@ -226,7 +226,7 @@ Built on the public porting workspace from [instructkr/claw-code](https://github
 ## 🏗️ Architecture
 
 ```text
-claw-code/
+codemd/
 ├── README.md
 ├── TESTING_GUIDE.md              # How to test every feature
 ├── PARITY_CHECKLIST.md           # Implementation status vs npm source
@@ -700,7 +700,7 @@ The runtime currently includes core and extended tools:
 
 ## 🔌 Plugin System
 
-Claw Code Agent supports a **manifest-based plugin runtime**. Drop a `plugin.json` in a `plugins/` subdirectory:
+codemd supports a **manifest-based plugin runtime**. Drop a `plugin.json` in a `plugins/` subdirectory:
 
 ```json
 {
@@ -851,7 +851,7 @@ Inspect saved sessions:
 ls -lt .port_sessions/agent
 ```
 
-> **Note:** Run `agent-resume` from the same `claw-code/` directory where the session was created. A resumed session continues from the saved transcript, not from scratch.
+> **Note:** Run `agent-resume` from the same `codemd/` directory where the session was created. A resumed session continues from the saved transcript, not from scratch.
 
 ---
 
@@ -879,7 +879,7 @@ python3 -m src.main agent \
 
 ## 🔐 Permission Model
 
-Claw Code Agent uses a **tiered permission system** to keep the agent safe by default:
+codemd uses a **tiered permission system** to keep it safe by default:
 
 | Tier | Capability | Flag Required |
 |------|-----------|---------------|

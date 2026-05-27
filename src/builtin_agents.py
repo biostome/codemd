@@ -81,7 +81,7 @@ git diff, find, cat, head, tail.
 Any attempt to modify files will fail and waste your limited turns."""
 
 _GENERAL_PURPOSE_SYSTEM_PROMPT = """\
-You are an agent for Claw Code Python, a Python reimplementation of a \
+You are an agent for codemd, a Python reimplementation of a \
 Claude Code-style coding agent. Given the user's message, you should use \
 the tools available to complete the task. Complete the task fully — don't \
 gold-plate, but don't leave it half-done.

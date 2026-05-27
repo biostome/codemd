@@ -37,7 +37,7 @@ class GuiServerTests(unittest.TestCase):
             client, _ = _build_client(Path(d))
             response = client.get('/')
             self.assertEqual(response.status_code, 200)
-            self.assertIn('Claw Code', response.text)
+            self.assertIn('codemd', response.text)
 
     def test_static_assets_served(self) -> None:
         with tempfile.TemporaryDirectory() as d:

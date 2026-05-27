@@ -102,7 +102,7 @@ class TestCopyCommand(unittest.TestCase):
         self.assertIn('Copied', result.final_output)
         self.assertIn('response.md', result.final_output)
         # Verify the file was written
-        tmp_file = Path(tempfile.gettempdir()) / 'claw-code' / 'response.md'
+        tmp_file = Path(tempfile.gettempdir()) / 'codemd' / 'response.md'
         self.assertTrue(tmp_file.exists())
         content = tmp_file.read_text()
         self.assertEqual(content, 'Second response with details.')
@@ -117,7 +117,7 @@ class TestCopyCommand(unittest.TestCase):
                 AgentMessage(role='assistant', content='Second.'),
             ])
             result = agent.run('/copy 1')
-        tmp_file = Path(tempfile.gettempdir()) / 'claw-code' / 'response.md'
+        tmp_file = Path(tempfile.gettempdir()) / 'codemd' / 'response.md'
         content = tmp_file.read_text()
         self.assertEqual(content, 'First.')
 

@@ -54,9 +54,9 @@ class ClawCodeInstalledAgent(BaseInstalledAgent):
         )
         version_spec = f"@{self._version}" if self._version else ""
         repo_spec = (
-            f"git+https://github.com/HarnessLab/codemd.git{version_spec}"
+            f"git+https://github.com/biostome/codemd.git{version_spec}"
             if version_spec
-            else "git+https://github.com/HarnessLab/codemd.git"
+            else "git+https://github.com/biostome/codemd.git"
         )
         await self.exec_as_agent(
             environment,

@@ -1,1 +1,1 @@
-"""Claw Code Agent local benchmark suite."""
+"""codemd local benchmark suite."""

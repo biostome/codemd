@@ -16,8 +16,8 @@ from .server import AgentState, create_app
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        prog='claw-code-gui',
-        description='Launch the local web GUI for the claw-code agent.',
+        prog='codemd-gui',
+        description='Launch the local web GUI for the codemd agent.',
     )
     parser.add_argument('--host', default='127.0.0.1')
     parser.add_argument('--port', type=int, default=8765)
@@ -130,7 +130,7 @@ def main() -> None:
     app = create_app(state)
 
     url = f'http://{args.host}:{args.port}'
-    print(f'Claw Code GUI listening on {url}')
+    print(f'codemd GUI listening on {url}')
     print(f'  cwd       : {state.cwd}')
     print(f'  model     : {state.model}')
     print(f'  base-url  : {state.base_url}')

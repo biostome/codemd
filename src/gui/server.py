@@ -444,7 +444,7 @@ class StateUpdate(BaseModel):
 # ---------------------------------------------------------------------------
 
 def create_app(state: AgentState) -> FastAPI:
-    app = FastAPI(title='Claw Code GUI', version='1.0')
+    app = FastAPI(title='codemd GUI', version='1.0')
 
     app.include_router(create_tasks_router(lambda: state.cwd))
     app.include_router(create_plans_router(lambda: state.cwd))

@@ -267,7 +267,7 @@ def save_results(results: list[TaskResult], output_path: str) -> None:
 # ---------------------------------------------------------------------------
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Claw Code Agent local benchmark")
+    parser = argparse.ArgumentParser(description="codemd local benchmark")
     parser.add_argument("--task", help="Run a single task by ID")
     parser.add_argument("--category", help="Run tasks in a category")
     parser.add_argument("--difficulty", choices=["easy", "medium", "hard"], help="Run tasks by difficulty")
